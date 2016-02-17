@@ -16,7 +16,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := healthd-mint2g.cpp
-LOCAL_MODULE := libhealthd.mint2g
+LOCAL_SRC_FILES := healthd-sprd.cpp
+LOCAL_MODULE := libhealthd.sprd
 LOCAL_C_INCLUDES := system/core/healthd
 include $(BUILD_STATIC_LIBRARY)
