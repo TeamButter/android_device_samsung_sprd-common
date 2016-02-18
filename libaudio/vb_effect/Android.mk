@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 
 LOCAL_CFLAGS := -D_POSIX_SOURCE -Wno-multichar -g
 
-LOCAL_C_INCLUDES += device/sprd/common/apps/engineeringmodel/engcs \
+LOCAL_C_INCLUDES += device/samsung/sprd-common/engineeringmodel/engcs \
 			external/tinyalsa/include
 
 LOCAL_SRC_FILES := vb_effect_if.c vbc_codec_eq.c filter_calc.c vb_hal_if.c vb_hal_adp.c tinyalsa_util.c
