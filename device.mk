@@ -81,6 +81,14 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     SamsungServiceMode
     
+# EGL
+PRODUCT_PACKAGES += \
+	libEGL_mali \
+	libGLESv1_CM_mali \
+	libGLESv2_mali \
+	libMali \
+	libUMP
+    
 # OMX
 PRODUCT_PACKAGES += \
 	libomx_aacdec_sprd.so \

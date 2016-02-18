@@ -33,7 +33,7 @@ TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/dwc_otg.0/gadget/lun0/
 
 # Graphics
 USE_OPENGL_RENDERER := true
-BOARD_EGL_CFG := device/samsung/sprd-common/egl/egl.cfg
+BOARD_EGL_CFG := device/samsung/sprd-common/mali/egl.cfg
 BOARD_EGL_NEEDS_FNW := true
 
 # Camera
