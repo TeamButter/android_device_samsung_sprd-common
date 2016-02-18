@@ -44,10 +44,10 @@ LOCAL_C_INCLUDES += \
 	external/expat/lib \
 	system/media/audio_utils/include \
 	system/media/audio_effects/include \
-	device/sprd/common/apps/engineeringmodel/engcs \
-	device/sprd/common/libs/audio/vb_effect	\
-	device/sprd/common/libs/audio/vb_pga \
-	device/sprd/common/libs/audio/record_process
+	device/samsung/sprd-common/engineeringmodel/engcs \
+	device/samsung/sprd-common/libaudio/vb_effect	\
+	device/samsung/sprd-common/libaudio/vb_pga \
+	device/samsung/sprd-common/libaudio/record_process
 
 
 LOCAL_SRC_FILES := audio_hw.c tinyalsa_util.c audio_pga.c \
