@@ -45,7 +45,7 @@ extern "C" void destroyAudioPolicyManager(AudioPolicyInterface *interface)
 // Nothing currently different between the Base implementation.
 
 AudioPolicyManagerSPRD::AudioPolicyManagerSPRD(AudioPolicyClientInterface *clientInterface)
-    : AudioPolicyManagerBase(clientInterface),is_voip_set(false)
+    : AudioPolicyManagerBase(clientInterface)
 {
     //loadVolumeProfilesInternal();
 }
