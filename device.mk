@@ -33,6 +33,7 @@ PRODUCT_PACKAGES += \
     audio.a2dp.default \
     audio.usb.default \
     audio.r_submix.default \
+    libtinyalsa \
     tinymix
     
 
@@ -40,10 +41,22 @@ PRODUCT_PACKAGES += \
 	Gallery2
 
 
-# Board-Pecific
+# Lights
 PRODUCT_PACKAGES += \
-    lights.sc8810 \
+    lights.sc8810
+
+# Sensors
+PRODUCT_PACKAGES += \
     sensors.sc8810
+    
+# Audio
+PRODUCT_PACKAGES += \
+	audio.primary.sc8810 \
+	audio_policy.sc8810 \
+	libaudiopolicy \
+	libvbeffect \
+	libvbpga \
+	vbc_eq 
 
 # Set default USB interface
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
