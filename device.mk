@@ -106,6 +106,10 @@ PRODUCT_PACKAGES += \
 	libomx_m4vh263enc_hw_sprd.so \
 	libomx_mp3dec_sprd.so \
 	libomx_vpxdec_hw_sprd.so
+	
+# Proper CPU Frequency scaling driver module by psych.half
+PRODUCT_PACKAGES += \
+	cpufreq-sc8810.ko
     
 # Web
 PRODUCT_PACKAGES += \
