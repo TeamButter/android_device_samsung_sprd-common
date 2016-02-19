@@ -48,15 +48,7 @@ PRODUCT_PACKAGES += \
 # Sensors
 PRODUCT_PACKAGES += \
     sensors.sc8810
-    
-# Audio
-PRODUCT_PACKAGES += \
-	audio.primary.sc8810 \
-	audio_policy.sc8810 \
-	libaudiopolicy \
-	libvbeffect \
-	libvbpga \
-	vbc_eq 
+
 
 # Set default USB interface
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
