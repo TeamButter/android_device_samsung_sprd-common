@@ -54,7 +54,6 @@ public class SamsungSPRDRIL extends RIL implements CommandsInterface {
         rr.mParcel.writeInt(clirMode);
         rr.mParcel.writeInt(0); // UUS information is absent: Samsung SPRD compat
         rr.mParcel.writeInt(1); // Samsung magic
-        rr.mParcel.writeString(""); // Samsung magic
 
         if (uusInfo == null) {
             rr.mParcel.writeInt(0); // UUS information is absent
@@ -99,30 +98,6 @@ public class SamsungSPRDRIL extends RIL implements CommandsInterface {
         int simId = mInstanceId == null ? 0 : mInstanceId;
         if (RILJ_LOGD) riljLog("Setting data subscription to " + simId);
         invokeOemRilRequestRaw(new byte[] {(byte) 9, (byte) 4}, result);
-    }
-
-    public void setDefaultVoiceSub(int subIndex, Message response) {
-        // Fake the message
-        AsyncResult.forMessage(response, 0, null);
-        response.sendToTarget();
-    }
-
-    @Override
-    protected void notifyRegistrantsRilConnectionChanged(int rilVer) {
-        super.notifyRegistrantsRilConnectionChanged(rilVer);
-        if (rilVer != -1) {
-            if (mInstanceId != null) {
-                // Enable simultaneous data/voice on Multi-SIM
-                invokeOemRilRequestSprd((byte) 3, (byte) 1, null);
-            } else {
-                // Set data subscription to allow data in either SIM slot when using single SIM mode
-                setDataSubscription(null);
-            }
-        }
-    }
-
-    private void invokeOemRilRequestSprd(byte key, byte value, Message response) {
-        invokeOemRilRequestRaw(new byte[] { 'S', 'P', 'R', 'D', key, value }, response);
     }
 
     protected RILRequest
@@ -323,79 +298,6 @@ public class SamsungSPRDRIL extends RIL implements CommandsInterface {
         }
 
         return rr;
-    }
-
-    @Override
-    protected Object
-    responseCallList(Parcel p) {
-        int num;
-        int voiceSettings;
-        ArrayList<DriverCall> response;
-        DriverCall dc;
-
-        num = p.readInt();
-        response = new ArrayList<DriverCall>(num);
-
-        for (int i = 0 ; i < num ; i++) {
-            dc = new DriverCall();
-
-            dc.state = DriverCall.stateFromCLCC(p.readInt());
-            dc.index = p.readInt();
-            dc.TOA = p.readInt();
-            dc.isMpty = (0 != p.readInt());
-            dc.isMT = (0 != p.readInt());
-            dc.als = p.readInt();
-            voiceSettings = p.readInt();
-            dc.isVoice = (0 == voiceSettings) ? false : true;
-            //Some Samsung magic data for Videocalls
-            // hack taken from smdk4210ril class
-            p.readInt();
-            //printing it to cosole for later investigation
-            Rlog.d(LOG_TAG, "Samsung magic = " + voiceSettings);
-            dc.isVoicePrivacy = (0 != p.readInt());
-            p.readInt();
-            p.readInt();
-            p.readString();
-            dc.number = p.readString();
-            int np = p.readInt();
-            dc.numberPresentation = DriverCall.presentationFromCLIP(np);
-            dc.name = p.readString();
-            dc.namePresentation = p.readInt();
-            int uusInfoPresent = p.readInt();
-            if (uusInfoPresent == 1) {
-                dc.uusInfo = new UUSInfo();
-                dc.uusInfo.setType(p.readInt());
-                dc.uusInfo.setDcs(p.readInt());
-                byte[] userData = p.createByteArray();
-                dc.uusInfo.setUserData(userData);
-                riljLogv(String.format("Incoming UUS : type=%d, dcs=%d, length=%d",
-                                       dc.uusInfo.getType(), dc.uusInfo.getDcs(),
-                                       dc.uusInfo.getUserData().length));
-                riljLogv("Incoming UUS : data (string)="
-                         + new String(dc.uusInfo.getUserData()));
-                riljLogv("Incoming UUS : data (hex): "
-                         + IccUtils.bytesToHexString(dc.uusInfo.getUserData()));
-            } else {
-                riljLogv("Incoming UUS : NOT present!");
-            }
-
-            // Make sure there's a leading + on addresses with a TOA of 145
-            dc.number = PhoneNumberUtils.stringFromStringAndTOA(dc.number, dc.TOA);
-
-            response.add(dc);
-
-            if (dc.isVoicePrivacy) {
-                mVoicePrivacyOnRegistrants.notifyRegistrants();
-                riljLog("InCall VoicePrivacy is enabled");
-            } else {
-                mVoicePrivacyOffRegistrants.notifyRegistrants();
-                riljLog("InCall VoicePrivacy is disabled");
-            }
-        }
-
-        Collections.sort(response);
-
-        return response;
     }
 }
 
