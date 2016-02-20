@@ -9,23 +9,29 @@
  */
 
 /**
- * @file ump_kernel_interface.h
+ * @file ump_osk_misc.c
+ * Implementation of the OS abstraction layer for the UMP kernel device driver
  */
 
-#ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
-#define __UMP_KERNEL_INTERFACE_REF_DRV_H__
 
-#include "ump_kernel_interface.h"
+#include "ump_osk.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <linux/kernel.h>
+#include "ump_kernel_linux.h"
 
-/** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
+/* is called from ump_kernel_constructor in common code */
+_mali_osk_errcode_t _ump_osk_init( void )
+{
+	if (0 != ump_kernel_device_initialize())
+	{
+		return _MALI_OSK_ERR_FAULT;
+	}
 
-#ifdef __cplusplus
+	return _MALI_OSK_ERR_OK;
 }
-#endif
 
-#endif  /* __UMP_KERNEL_INTERFACE_REF_DRV_H__ */
+_mali_osk_errcode_t _ump_osk_term( void )
+{
+	ump_kernel_device_terminate();
+	return _MALI_OSK_ERR_OK;
+}

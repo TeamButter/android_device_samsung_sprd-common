@@ -9,23 +9,14 @@
  */
 
 /**
- * @file ump_kernel_interface.h
+ * @file mali_osk_math.c
+ * Implementation of the OS abstraction layer for the kernel device driver
  */
 
-#ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
-#define __UMP_KERNEL_INTERFACE_REF_DRV_H__
+#include "mali_osk.h"
+#include <linux/bitops.h>
 
-#include "ump_kernel_interface.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
-
-#ifdef __cplusplus
+u32 inline _mali_osk_clz( u32 input )
+{
+	return 32-fls(input);
 }
-#endif
-
-#endif  /* __UMP_KERNEL_INTERFACE_REF_DRV_H__ */

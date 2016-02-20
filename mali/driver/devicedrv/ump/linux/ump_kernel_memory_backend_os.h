@@ -9,23 +9,15 @@
  */
 
 /**
- * @file ump_kernel_interface.h
+ * @file ump_kernel_memory_backend_os.h
  */
 
-#ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
-#define __UMP_KERNEL_INTERFACE_REF_DRV_H__
+#ifndef __UMP_KERNEL_MEMORY_BACKEND_OS_H__
+#define __UMP_KERNEL_MEMORY_BACKEND_OS_H__
 
-#include "ump_kernel_interface.h"
+#include "ump_kernel_memory_backend.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+ump_memory_backend * ump_os_memory_backend_create(const int max_allocation);
 
-/** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
+#endif /* __UMP_KERNEL_MEMORY_BACKEND_OS_H__ */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __UMP_KERNEL_INTERFACE_REF_DRV_H__ */

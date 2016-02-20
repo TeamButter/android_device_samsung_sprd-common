@@ -9,23 +9,23 @@
  */
 
 /**
- * @file ump_kernel_interface.h
+ * @file mali_kernel_license.h
+ * Defines for the macro MODULE_LICENSE.
  */
 
-#ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
-#define __UMP_KERNEL_INTERFACE_REF_DRV_H__
-
-#include "ump_kernel_interface.h"
+#ifndef __MALI_KERNEL_LICENSE_H__
+#define __MALI_KERNEL_LICENSE_H__
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
+#define MALI_KERNEL_LINUX_LICENSE     "GPL"
+#define MALI_LICENSE_IS_GPL 1
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __UMP_KERNEL_INTERFACE_REF_DRV_H__ */
+#endif /* __MALI_KERNEL_LICENSE_H__ */

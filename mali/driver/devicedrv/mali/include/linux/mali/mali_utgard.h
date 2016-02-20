@@ -8,24 +8,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/**
- * @file ump_kernel_interface.h
+#ifndef __MALI_UTGARD_H__
+#define	__MALI_UTGARD_H__ 
+
+/** @brief MALI GPU power down using MALI in-built PMU
+ * 
+ * called to power down all cores 
  */
+int mali_pmu_powerdown(void);
 
-#ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
-#define __UMP_KERNEL_INTERFACE_REF_DRV_H__
 
-#include "ump_kernel_interface.h"
+/** @brief MALI GPU power up using MALI in-built PMU
+ * 
+ * called to power up all cores 
+ */
+int mali_pmu_powerup(void);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#endif /* __MALI_UTGARD_H__ */
 
-/** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __UMP_KERNEL_INTERFACE_REF_DRV_H__ */

@@ -9,23 +9,27 @@
  */
 
 /**
- * @file ump_kernel_interface.h
+ * @file ump_ukk_wrappers.h
+ * Defines the wrapper functions which turn Linux IOCTL calls into _ukk_ calls for the reference implementation
  */
 
-#ifndef __UMP_KERNEL_INTERFACE_REF_DRV_H__
-#define __UMP_KERNEL_INTERFACE_REF_DRV_H__
+#ifndef __UMP_UKK_REF_WRAPPERS_H__
+#define __UMP_UKK_REF_WRAPPERS_H__
 
-#include "ump_kernel_interface.h"
+#include <linux/kernel.h>
+#include "ump_kernel_common.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/** Turn specified physical memory into UMP memory. */
-UMP_KERNEL_API_EXPORT ump_dd_handle ump_dd_handle_create_from_phys_blocks(ump_dd_physical_block * blocks, unsigned long num_blocks);
+
+int ump_allocate_wrapper(u32 __user * argument, struct ump_session_data  * session_data);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __UMP_KERNEL_INTERFACE_REF_DRV_H__ */
+#endif /* __UMP_UKK_REF_WRAPPERS_H__ */
