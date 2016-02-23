@@ -253,7 +253,7 @@ int at_cmd_volume(float vol, int mode)
     int ret = 0;
     unsigned short cur_device;
 
-    int volume = vol * VOICECALL_VOLUME_MAX_UI + 1;
+    int volume = vol; /* * VOICECALL_VOLUME_MAX_UI + 1;*/
     if (volume >= VOICECALL_VOLUME_MAX_UI) volume = VOICECALL_VOLUME_MAX_UI;
     ALOGI("%s mode=%d ,volume=%d, android vol:%f ", __func__,mode,volume,vol);
     snprintf(at_cmd, sizeof buf, "AT+VGR=%d", volume);
