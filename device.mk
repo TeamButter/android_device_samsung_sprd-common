@@ -101,11 +101,7 @@ PRODUCT_PACKAGES += \
 	libGLESv2_mali \
 	libMali \
 	libUMP
-	
-# Update GPU modules
-PRODUCT_PACKAGES += \
-	ump.ko \
-	mali.ko
+
     
 # OMX
 PRODUCT_PACKAGES += \
