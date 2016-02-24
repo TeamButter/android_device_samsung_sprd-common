@@ -14,55 +14,61 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_AKM_SENSOR_H
-#define ANDROID_AKM_SENSOR_H
+#ifndef ANDROID_PLS_SENSOR_H
+#define ANDROID_PLS_SENSOR_H
 
 #include <stdint.h>
 #include <errno.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-
 #include "sensors.h"
 #include "SensorBase.h"
 #include "InputEventReader.h"
 
+
+#define SENSORS_ACCELERATION_HANDLE     0
+#define SENSORS_MAGNETIC_FIELD_HANDLE   1
+#define SENSORS_ORIENTATION_HANDLE      2
+#define SENSORS_LIGHT_HANDLE            3
+#define SENSORS_PROXIMITY_HANDLE        4
 /*****************************************************************************/
 
 struct input_event;
 
-class AkmSensor : public SensorBase {
+class PlsSensor : public SensorBase {
 public:
-            AkmSensor();
-    virtual ~AkmSensor();
+			PlsSensor();
+    virtual ~PlsSensor();
 
+#ifndef PLS_NULL
     enum {
-		Accelerometer = 0,
-        MagneticField,
-        Orientation,
+        Light   = 0,
+        Proximity   = 1,
         numSensors
     };
-
-    virtual int readEvents(sensors_event_t* data, int count);
+#else
+	static const int numSensors = 0;
+#endif
     virtual int setDelay(int32_t handle, int64_t ns);
     virtual int setEnable(int32_t handle, int enabled);
-    virtual int64_t getDelay(int32_t handle);
-    virtual int getEnable(int32_t handle);
-	int setAccel(sensors_event_t* data);
+    virtual bool hasPendingEvents() const;
+    virtual int readEvents(sensors_event_t* data, int count);
+	virtual int getEnable(int32_t handle);
+    void processEvent(int code, int value);
+    virtual int populateSensorList(struct sensor_t *list);
+
 
 private:
-    int mEnabled[numSensors];
-	int64_t mDelay[numSensors];
+    int update_delay();
+    uint32_t mEnabled;
     uint32_t mPendingMask;
     InputEventCircularReader mInputReader;
+    bool mHasPendingEvent;
     sensors_event_t mPendingEvents[numSensors];
-	char input_sysfs_path[PATH_MAX];
-	int input_sysfs_path_len;
-
-	int handle2id(int32_t handle);
-    void processEvent(int code, int value);
+    uint64_t mDelays[numSensors];
 };
 
 /*****************************************************************************/
 
-#endif  // ANDROID_AKM_SENSOR_H
+#endif  // ANDROID_PLS_SENSOR_H

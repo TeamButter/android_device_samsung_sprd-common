@@ -14,44 +14,62 @@
 
 
 LOCAL_PATH := $(call my-dir)
-
+ifeq ($(USE_SPRD_SENSOR_LIB),true)
 ifneq ($(TARGET_SIMULATOR),true)
+ifneq ($(USE_INVENSENSE_LIB),true)
 
 # HAL module implemenation, not prelinked, and stored in
 # hw/<SENSORS_HARDWARE_MODULE_ID>.<ro.product.board>.so
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := sensors.$(TARGET_BOOTLOADER_BOARD_NAME)
+LOCAL_MODULE := sensors.$(TARGET_BOARD_PLATFORM)
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_CFLAGS := -DLOG_TAG=\"Sensors\" \
-				-DSENSORHAL_ACC_LIS3DH \
 				-Wall
-#				-DSENSORHAL_ACC_KXTF9 \
-
-ifeq ($(BOARD_HAVE_TMD2771),true)
-LOCAL_CFLAGS += -DSENSORHAL_PL_TMD2771
-endif
 
 LOCAL_SRC_FILES := \
 			SensorBase.cpp \
+			SensorCoordinate.cpp \
 			InputEventReader.cpp \
-			Lis3dhSensor.cpp \
-			AkmSensor.cpp \
 			sensors.cpp
 
-ifeq ($(BOARD_HAVE_TMD2771),true)
-LOCAL_SRC_FILES +=  SensorTMD2771.cpp
+#################################################################
+#ACCELERATION
+ifneq ($(BOARD_HAVE_ACC),NULL)
+LOCAL_SRC_FILES += Acc_$(BOARD_HAVE_ACC).cpp
+LOCAL_CFLAGS += -DACC_INSTALL_$(BOARD_ACC_INSTALL)
+
+#MAGNETIC_FIELD&ORIENTATION
+ifneq ($(BOARD_HAVE_ORI),NULL)
+LOCAL_SRC_FILES += Ori_$(BOARD_HAVE_ORI).cpp
+LOCAL_CFLAGS += -DORI_INSTALL_$(BOARD_ORI_INSTALL)
 else
-LOCAL_SRC_FILES +=  SensorAL3006.cpp
+LOCAL_CFLAGS += -DORI_NULL
 endif
+
+else
+LOCAL_CFLAGS += -DACC_NULL
+LOCAL_CFLAGS += -DORI_NULL
+endif
+
+#################################################################
+#LIGHT&PROXIMITY
+ifneq ($(BOARD_HAVE_PLS),NULL)
+LOCAL_SRC_FILES += Pls_$(BOARD_HAVE_PLS).cpp
+else
+LOCAL_CFLAGS += -DPLS_NULL
+endif
+
 
 LOCAL_SHARED_LIBRARIES := liblog libcutils libdl
 LOCAL_PRELINK_MODULE := false
 
 include $(BUILD_SHARED_LIBRARY)
 
+endif # !USE_INVENSENSE_LIB
 endif # !TARGET_SIMULATOR
+endif # USE_SPRD_SENSOR_LIB

@@ -67,6 +67,7 @@ public:
     virtual int setEnable(int32_t handle, int enabled) = 0;
 	/* It returns the number of reference. */
     virtual int getEnable(int32_t handle) = 0;
+    virtual int populateSensorList(struct sensor_t *list);
 };
 
 /*****************************************************************************/
