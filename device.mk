@@ -17,8 +17,8 @@ LOCAL_PATH := device/samsung/sprd-common
 
 # Media
 PRODUCT_COPY_FILES += \
-     $(LOCAL_PATH)/media/media_codecs.xml:system/etc/media_codecs.xml \
-     $(LOCAL_PATH)/media/media_profiles.xml:system/etc/media_profiles.xml
+	$(LOCAL_PATH)/media/media_codecs.xml:system/etc/media_codecs.xml \
+	$(LOCAL_PATH)/media/media_profiles.xml:system/etc/media_profiles.xml
 
 
 #Wifi
@@ -30,11 +30,11 @@ PRODUCT_PACKAGES += \
 
 # Audio
 PRODUCT_PACKAGES += \
-    audio.a2dp.default \
-    audio.usb.default \
-    audio.r_submix.default \
-    libtinyalsa \
-    tinymix
+	audio.a2dp.default \
+	audio.usb.default \
+	audio.r_submix.default \
+	libtinyalsa \
+	tinymix
     
 
 PRODUCT_PACKAGES += \
@@ -43,11 +43,11 @@ PRODUCT_PACKAGES += \
 
 # Lights
 PRODUCT_PACKAGES += \
-    lights.sc8810
+	lights.sc8810
 
 # Sensors
 PRODUCT_PACKAGES += \
-    sensors.sc8810
+	sensors.sc8810
     
 # Audio
 PRODUCT_PACKAGES += \
@@ -57,6 +57,10 @@ PRODUCT_PACKAGES += \
 	libvbeffect \
 	libvbpga \
 	vbc_eq 
+	
+# Graphics
+PRODUCT_PACKAGES += \
+	gralloc.sc8810
 
 # Set default USB interface
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -64,42 +68,42 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 # Charger
 PRODUCT_PACKAGES += \
-    charger \
-    charger_res_images
+	charger \
+	charger_res_images
 
 # Permissions
 PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
-    frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
-    frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
-    frameworks/native/data/etc/android.hardware.bluetooth.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
-    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
-    frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
-    frameworks/native/data/etc/android.hardware.usb.accessory.xml:system/etc/permissions/android.hardware.usb.accessory.xml \
-    frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
-    frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
-    frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
-    packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml \
-    frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml
+	frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
+	frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
+	frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
+	frameworks/native/data/etc/android.hardware.bluetooth.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
+	frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+	frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
+	frameworks/native/data/etc/android.hardware.usb.accessory.xml:system/etc/permissions/android.hardware.usb.accessory.xml \
+ 	frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
+	frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
+	frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
+	packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml \
+ 	frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml
 
 # Filesystem management tools
 PRODUCT_PACKAGES += \
-    setup_fs
+	setup_fs
 
 # Misc packages
 PRODUCT_PACKAGES += \
-    com.android.future.usb.accessory
+	com.android.future.usb.accessory
     
 # Samsung Service Mode
 PRODUCT_PACKAGES += \
-    SamsungServiceMode
+	SamsungServiceMode
     
 # EGL
 PRODUCT_PACKAGES += \
-	libEGL_mali \
-	libGLESv1_CM_mali \
-	libGLESv2_mali \
-	libMali \
+	libEGL_mali.so \
+	libGLESv1_CM_mali.so \
+	libGLESv2_mali.so \
+	libMali.so \
 	libUMP
 
     
@@ -122,5 +126,5 @@ PRODUCT_PACKAGES += \
     
 # Web
 PRODUCT_PACKAGES += \
-    libskia_legacy
+	libskia_legacy
 
