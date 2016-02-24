@@ -45,9 +45,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
 	lights.sc8810
 
-# Sensors
-PRODUCT_PACKAGES += \
-	sensors.sc8810
     
 # Audio
 PRODUCT_PACKAGES += \
@@ -58,9 +55,6 @@ PRODUCT_PACKAGES += \
 	libvbpga \
 	vbc_eq 
 	
-# Graphics
-PRODUCT_PACKAGES += \
-	gralloc.sc8810
 
 # Set default USB interface
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -98,14 +92,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
 	SamsungServiceMode
     
-# EGL
-PRODUCT_PACKAGES += \
-	libEGL_mali.so \
-	libGLESv1_CM_mali.so \
-	libGLESv2_mali.so \
-	libMali.so \
-	libUMP
-
     
 # OMX
 PRODUCT_PACKAGES += \
