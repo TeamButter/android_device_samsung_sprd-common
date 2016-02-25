@@ -24,8 +24,6 @@ PRODUCT_COPY_FILES += \
 #Wifi
 PRODUCT_PACKAGES += \
 	dhcpcd.conf \
-	wpa_supplicant \
-	hostapd \
 	wpa_supplicant.conf
 
 # Audio
@@ -37,8 +35,15 @@ PRODUCT_PACKAGES += \
 	tinymix
     
 
+# Camera
 PRODUCT_PACKAGES += \
 	Gallery2
+	
+
+# WiFi
+PRODUCT_COPY_FILES += \
+	$(LOCAL_PATH)/prebuilt/bin/hostapd:system/bin/hostapd \
+	$(LOCAL_PATH)/prebuilt/bin/wpa_supplicant:system/bin/wpa_supplicant
 
 
 # Lights
