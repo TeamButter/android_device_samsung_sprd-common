@@ -512,24 +512,24 @@ static int SetVoice_gain_by_devices(struct tiny_audio_device *adev, pga_gain_nv_
         return -1;
     }
     if(pga_gain_nv->devices & AUDIO_DEVICE_OUT_EARPIECE){
-        audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"voice-earpiece");
+        audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"earpiece");
     }
     if((pga_gain_nv->devices & AUDIO_DEVICE_OUT_SPEAKER) && ((pga_gain_nv->devices & AUDIO_DEVICE_OUT_WIRED_HEADSET) || (pga_gain_nv->devices & AUDIO_DEVICE_OUT_WIRED_HEADPHONE))){
-        audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"voice-headphone-spk-l");
-        audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_r,"voice-headphone-spk-r");
+        audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"headphone-spk-l");
+        audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_r,"headphone-spk-r");
     }else{
         if(pga_gain_nv->devices & AUDIO_DEVICE_OUT_SPEAKER){
-            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"voice-speaker-l");
-            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_r,"voice-speaker-r");
+            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"speaker-l");
+            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_r,"speaker-r");
         }
         if((pga_gain_nv->devices & AUDIO_DEVICE_OUT_WIRED_HEADSET) || (pga_gain_nv->devices & AUDIO_DEVICE_OUT_WIRED_HEADPHONE)){
-            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"voice-headphone-l");
-            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_r,"voice-headphone-r");
+            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_l,"headphone-spk-l");
+            audio_pga_apply(adev->pga,pga_gain_nv->dac_pga_gain_r,"headphone-spk-r");
         }
     }
     if((pga_gain_nv->devices & AUDIO_DEVICE_IN_BUILTIN_MIC) || (pga_gain_nv->devices & AUDIO_DEVICE_IN_BACK_MIC) || (pga_gain_nv->devices & AUDIO_DEVICE_IN_WIRED_HEADSET)){
-        audio_pga_apply(adev->pga,pga_gain_nv->adc_pga_gain_l,"voice-capture-l");
-        audio_pga_apply(adev->pga,pga_gain_nv->adc_pga_gain_r,"voice-capture-r");
+        audio_pga_apply(adev->pga,pga_gain_nv->adc_pga_gain_l,"capture-l");
+        audio_pga_apply(adev->pga,pga_gain_nv->adc_pga_gain_r,"capture-r");
     }
     ALOGW("%s out, devices:0x%x ",__func__,pga_gain_nv->devices);
     return 0;
