@@ -114,6 +114,10 @@ PRODUCT_PACKAGES += \
 # Proper CPU Frequency scaling driver module by psych.half
 PRODUCT_PACKAGES += \
 	cpufreq-sc8810.ko
+	
+# MemoryHeapIon needed by camera and HWC
+PRODUCT_PACKAGES += \
+	libmemoryheapion
     
 # Web
 PRODUCT_PACKAGES += \
