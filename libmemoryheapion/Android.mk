@@ -1,4 +1,4 @@
-ifeq($(NEEDS_MEMORYHEAPION),true)
+ifeq ($(NEEDS_MEMORYHEAPION),true)
 
 LOCAL_PATH:= $(call my-dir)
 
