@@ -50,6 +50,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
 	lights.sc8810
 
+# Camera
+PRODUCT_PACKAGES += \
+	camera.sc8810
+
     
 # Audio
 PRODUCT_PACKAGES += \
@@ -58,7 +62,7 @@ PRODUCT_PACKAGES += \
 	libaudiopolicy \
 	libvbeffect \
 	libvbpga \
-	vbc_eq 
+	audio_vbc_eq 
 	
 
 # Set default USB interface
