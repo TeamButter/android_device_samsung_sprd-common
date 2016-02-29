@@ -53,7 +53,12 @@ PRODUCT_PACKAGES += \
 # Camera
 PRODUCT_PACKAGES += \
 	camera.sc8810
-
+	
+# Graphics
+PRODUCT_PACKAGES += \
+	gralloc.sc8810 \
+	hwcomposer.sc8810 \
+	libUMP
     
 # Audio
 PRODUCT_PACKAGES += \
