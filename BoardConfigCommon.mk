@@ -49,9 +49,8 @@ BOARD_BLUEDROID_VENDOR_CONF := device/samsung/sprd-common/bluetooth/libbt_vndcfg
 BOARD_HAL_STATIC_LIBRARIES := libhealthd.sprd
 
 # RIL
-#BOARD_RIL_CLASS := ../../../device/samsung/sprd-common/ril/
+BOARD_RIL_CLASS := ../../../device/samsung/sprd-common/ril/
 BOARD_MOBILEDATA_INTERFACE_NAME := "rmnet0"
-BOARD_RIL_NO_CELLINFOLIST := true
 
 # Audio
 BOARD_USES_TINYALSA_AUDIO := true
@@ -59,7 +58,6 @@ BOARD_USES_TINYALSA_AUDIO := true
 
 # HWComposer
 USE_SPRD_HWCOMPOSER := true
-
 
 # Charger
 BOARD_CHARGER_ENABLE_SUSPEND := true
