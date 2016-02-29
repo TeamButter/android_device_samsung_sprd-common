@@ -31,8 +31,8 @@
 #include "framebuffer_device.h"
 
 #if GRALLOC_ARM_UMP_MODULE
-#include "ump/ump.h"
-#include "ump/ump_ref_drv.h"
+#include <ump/ump.h>
+#include <ump/ump_ref_drv.h>
 #endif
 
 #if GRALLOC_ARM_DMA_BUF_MODULE

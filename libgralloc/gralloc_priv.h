@@ -99,10 +99,10 @@ struct private_handle_t
 	int     fd;
 
 	// ints
-//#if GRALLOC_ARM_DMA_BUF_MODULE
+#if GRALLOC_ARM_DMA_BUF_MODULE
 	/*shared file descriptor for dma_buf sharing*/
 	int     share_fd;
-//#endif
+#endif
 	int     magic;
 	int     flags;
 	int     size;

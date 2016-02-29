@@ -31,6 +31,5 @@
 #define AERR_IF( eq, fmt, args...) if ( (eq) ) AERR( fmt, args )
 #endif
 
-
 // Create an alloc device
 int alloc_device_open(hw_module_t const* module, const char* name, hw_device_t** device);
