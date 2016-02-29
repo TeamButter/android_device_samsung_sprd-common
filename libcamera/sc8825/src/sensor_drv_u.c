@@ -1,17 +1,14 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2012 Spreadtrum Communications Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
  #include <utils/Log.h>
@@ -398,7 +395,7 @@ int _Sensor_Device_WriteRegTab(SENSOR_REG_TAB_PTR reg_tab)
 	if (0 != ret)
 	{
 		SENSOR_PRINT_ERR("_Sensor_Device_SetRegTab failed,  ptr=%x, count=%d, bits=%d, burst=%d \n",
-			(uint32_t)reg_tab->sensor_reg_tab_ptr, reg_tab->reg_count, reg_tab->reg_bits, reg_tab->burst_mode);
+			reg_tab->sensor_reg_tab_ptr, reg_tab->reg_count, reg_tab->reg_bits, reg_tab->burst_mode);
 		
 		ret = -1;
 	}
@@ -960,11 +957,8 @@ LOCAL int _Sensor_SetId(SENSOR_ID_E sensor_id)
 			}
 			g_is_main_sensor = 1;
 		}
-		g_is_register_sensor = 0;
+
 		if (_Sensor_Device_I2CInit(sensor_id)) {
-			if (SENSOR_MAIN == sensor_id) {
-				g_is_main_sensor = 0;
-			}
 			SENSOR_PRINT_HIGH("SENSOR: add I2C driver error\n");
 			return SENSOR_FAIL;
 		} else {
@@ -1290,7 +1284,7 @@ LOCAL void _Sensor_SetStatus(SENSOR_ID_E sensor_id)
 	s_sensor_info_ptr = s_sensor_list_ptr[sensor_id];
 	SENSOR_PRINT("_Sensor_SetStatus: 3");
 	//reset target sensor. and make normal.
-/*	Sensor_Reset_EX((BOOLEAN)s_sensor_info_ptr->power_down_level, s_sensor_info_ptr->reset_pulse_level);*/
+	Sensor_Reset_EX((BOOLEAN)s_sensor_info_ptr->power_down_level, s_sensor_info_ptr->reset_pulse_level);
 	Sensor_SetExportInfo(&s_sensor_exp_info);
 	SENSOR_PRINT("_Sensor_SetStatus: 4");
 }
@@ -1465,12 +1459,10 @@ int Sensor_Init(uint32_t sensor_id, uint32_t *sensor_num_ptr)
 			if (SENSOR_SUCCESS == _Sensor_Register(SENSOR_MAIN)) {
 				sensor_num++;
 			}
-			#ifndef CONFIG_FRONT_CAMERA_NONE
 			if (SENSOR_SUCCESS == _Sensor_Register(SENSOR_SUB)) {
 				sensor_num++;
 			}
 			SENSOR_PRINT("1");
-			#endif
 
 			ret_val = Sensor_Open(sensor_id);
 			if (ret_val != SENSOR_SUCCESS ) {
@@ -1483,10 +1475,8 @@ int Sensor_Init(uint32_t sensor_id, uint32_t *sensor_num_ptr)
 			SENSOR_PRINT("Sensor_Init: register sesnor fail, start identify \n");
 			if (_Sensor_Identify(SENSOR_MAIN))
 				sensor_num++;
-			#ifndef CONFIG_FRONT_CAMERA_NONE
 			if (_Sensor_Identify(SENSOR_SUB))
 				sensor_num++;
-			#endif
 			ret_val = Sensor_Open(sensor_id);
 		}
 		s_sensor_identified = SCI_TRUE;
@@ -1543,7 +1533,6 @@ int Sensor_Open(uint32_t sensor_id)
 		//confirm camera identify OK
 		if(SENSOR_SUCCESS != s_sensor_info_ptr->ioctl_func_tab_ptr->identify(SENSOR_ZERO_I2C)){
 			sensor_register_info_ptr->is_register[sensor_id] = SENSOR_FALSE;
-			_Sensor_I2CDeInit(sensor_id);
 			SENSOR_PRINT("SENSOR: Sensor_Open: sensor identify not correct!!");
 			return SENSOR_FAIL;
 		}
@@ -1551,7 +1540,6 @@ int Sensor_Open(uint32_t sensor_id)
 		ret_val = SENSOR_SUCCESS;
 		if (SENSOR_SUCCESS != Sensor_SetMode(SENSOR_MODE_COMMON_INIT)) {
 			SENSOR_PRINT_ERR("Sensor set init mode error!");
-			_Sensor_I2CDeInit(sensor_id);
 			ret_val = SENSOR_FAIL;
 		}
 		SENSOR_PRINT("Sensor_Open: 4\n");
@@ -1752,7 +1740,7 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo(void)
 		return PNULL;
 	}
 
-	SENSOR_PRINT("Sensor_GetInfo: info=%x \n", (uint32_t)&s_sensor_exp_info);
+	SENSOR_PRINT("Sensor_GetInfo: info=%x \n", &s_sensor_exp_info);
 	return &s_sensor_exp_info;
 }
 

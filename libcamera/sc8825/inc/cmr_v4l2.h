@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef _CMR_V4L2_H_
 #define _CMR_V4L2_H_
 
@@ -24,7 +23,7 @@ extern "C"
 
 #include "cmr_common.h"
 
-#define V4L2_BUF_MAX                   8
+#define V4L2_BUF_MAX                   4
 
 enum v4l2_sensor_format {
 	V4L2_SENSOR_FORMAT_YUV = 0,

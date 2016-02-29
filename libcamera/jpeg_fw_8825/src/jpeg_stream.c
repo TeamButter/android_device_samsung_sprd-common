@@ -655,7 +655,7 @@ PUBLIC BOOLEAN Jpeg_WriteBlock(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     uint8   *write_buf = context_ptr->write_buf;
     uint32  write_size = context_ptr->write_buf_size;
     uint32 i;
-    BOOLEAN ret = TRUE;
+
 #if 1
 	if (NULL == write_ptr || NULL == block_buf_ptr )
 	{
@@ -665,10 +665,7 @@ PUBLIC BOOLEAN Jpeg_WriteBlock(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
 	{
 		for(i=0; i<block_size; i++)
 		{
-			if(TRUE != Jpeg_WriteC(context_ptr, *block_buf_ptr++)) {
-				ret = FALSE;
-				break;
-			}
+			Jpeg_WriteC(context_ptr, *block_buf_ptr++);
 		}
 	}
 #else
@@ -684,5 +681,5 @@ PUBLIC BOOLEAN Jpeg_WriteBlock(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr,
     }
 #endif
 
-    return ret;
+    return TRUE;
 }

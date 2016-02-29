@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <stdlib.h>
 #include <fcntl.h>              /* low-level i/o */
 #include <sys/stat.h>
@@ -210,11 +209,12 @@ int cmr_v4l2_cap_cfg(struct cap_cfg *cfg)
 	uint32_t                 ret_channel_num = 0;
 	uint32_t                 pxl_fmt;
 	
+	CMR_LOGV("channle number %d , frame number %d", cfg->channel_num, cfg->frm_num);
+	
 	CMR_CHECK_FD;
 
 	if (NULL == cfg || 0 == cfg->channel_num || 0 == cfg->frm_num)
 		return -1;
-	CMR_LOGV("channle number %d , frame number %d", cfg->channel_num, cfg->frm_num);
 
 	/* firstly, set capture mode as single capture or multi-capture */
 	stream_parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -334,11 +334,12 @@ int cmr_v4l2_buff_cfg (struct buffer_cfg *buf_cfg)
 	struct v4l2_streamparm   stream_parm;
 
 	CMR_CHECK_FD;
+
+	CMR_LOGV("%d %d 0x%x ", buf_cfg->channel_id, buf_cfg->count, buf_cfg->base_id);
 	
 	if (NULL == buf_cfg || buf_cfg->count > V4L2_BUF_MAX)
 		return -1;
 
-	CMR_LOGV("%d %d 0x%x ", buf_cfg->channel_id, buf_cfg->count, buf_cfg->base_id);
 
 	if (0 == buf_cfg->channel_id) {
 		v4l2_buf.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -585,7 +586,7 @@ static void* cmr_v4l2_thread_proc(void* data)
 
 	if (-1 == fd) {
 		CMR_LOGE("V4L2 device not opened");
-		return (void*)-1;
+		return -1;
 	}
 
 	CMR_LOGV("In");

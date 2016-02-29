@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef _JPEG_CODEC_H_
 #define _JPEG_CODEC_H_
 
@@ -42,9 +41,7 @@ enum cmr_jpeg_evt {
 	CMR_JPEG_ENC_DONE = CMR_EVT_JPEG_BASE,
 	CMR_JPEG_DEC_DONE,
 	CMR_JPEG_WEXIF_DONE,
-	CMR_JPEG_ENC_ERR,
-	CMR_JPEG_DEC_ERR,
-	CMR_JPEG_ERR,
+	CMR_JPEG_ERR
 };
 
 

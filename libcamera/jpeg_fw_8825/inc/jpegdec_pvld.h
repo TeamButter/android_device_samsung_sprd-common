@@ -27,6 +27,9 @@
     {
 #endif
 
+//#define huff_EXTEND(x, s) ((x) < (1 <<((s) -1)) ? \
+//		(x) + (-1 <<(s)) +1 : \
+//		(x))
 #if PROGRESSIVE_SUPPORT
 #define HUFF_DECODE(result,tbl,slowlabel) \
 {   register int32 nb, look; \

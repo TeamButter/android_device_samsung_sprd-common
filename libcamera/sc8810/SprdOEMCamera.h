@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+* hardware/sprd/hsdroid/libcamera/sprdoemcamera.h
+ * Dcam HAL based on sc8800g2
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (C) 2011 Spreadtrum 
+ * 
+ * Author: Xiaozhe wang <xiaozhe.wang@spreadtrum.com>
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
-
 #ifndef ANDROID_HARDWARE_SPRD_OEM_CAMERA_H
 #define ANDROID_HARDWARE_SPRD_OEM_CAMERA_H
 
@@ -44,19 +45,6 @@ typedef enum
 	SENSOR_IMAGE_FORMAT_MAX
 }SENSOR_IMAGE_FORMAT_E;
 
-typedef enum {
-	SENSOR_MODE_COMMON_INIT = 0,
-	SENSOR_MODE_PREVIEW_ONE,
-	SENSOR_MODE_SNAPSHOT_ONE_FIRST,
-	SENSOR_MODE_SNAPSHOT_ONE_SECOND,
-	SENSOR_MODE_SNAPSHOT_ONE_THIRD,
-	SENSOR_MODE_PREVIEW_TWO,
-	SENSOR_MODE_SNAPSHOT_TWO_FIRST,
-	SENSOR_MODE_SNAPSHOT_TWO_SECOND,
-	SENSOR_MODE_SNAPSHOT_TWO_THIRD,
-	SENSOR_MODE_MAX
-} SENSOR_MODE_E;
-
 typedef struct
 {
 	uint16_t mode;
@@ -70,7 +58,7 @@ typedef struct
 }SENSOR_MODE_INFO_T;
 
 void camera_assoc_pmem(qdsp_module_type module,
-                                  int pmem_fd,
+                                  int pmem_fd, 
                                   void *addr,
                                   uint32_t length,
                                   int external);
@@ -118,7 +106,7 @@ camera_ret_code_type camera_start (
 #ifdef FEATURE_NATIVELINUX
         ,int  display_height,
         int  display_width
-#endif // FEATURE_NATIVELINUX
+#endif // FEATURE_NATIVELINUX 
         );
 camera_ret_code_type camera_start_preview (
         camera_cb_f_type callback,
@@ -136,7 +124,7 @@ camera_ret_code_type camera_take_picture (
         void               *client_data
 #if !defined FEATURE_CAMERA_ENCODE_PROPERTIES && defined FEATURE_CAMERA_V7
         ,camera_raw_type camera_raw_mode
-#endif // nFEATURE_CAMERA_ENCODE_PROPERTIES && FEATURE_CAMERA_V7
+#endif // nFEATURE_CAMERA_ENCODE_PROPERTIES && FEATURE_CAMERA_V7 
         );
 void rex_start();
 void rex_shutdown();
@@ -148,7 +136,6 @@ void camera_alloc_swap_buffer(uint32_t phy_addr, uint32_t buf_size);
 void camera_get_sensor_max_size(uint32_t *width_ptr,uint32_t *height_ptr);
 void camera_get_sensor_mode(void);
 SENSOR_IMAGE_FORMAT_E camera_get_capture_format(uint32_t width);
-void camera_get_sensor_output_size(uint32_t *sensor_w, uint32_t *sensor_h);
 int camera_start_af_thread(camera_focus_e_type focus,
         									      camera_cb_f_type callback,
        									       void *client_data);

@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+* hardware/sprd/hsdroid/libcamera/sprdOEMcamera.cpp
+ * Dcam HAL based on sc8800g2
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (C) 2011 Spreadtrum
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * Author: Xiaozhe wang <xiaozhe.wang@spreadtrum.com>
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
-
 #define LOG_NDEBUG 0
 #define LOG_TAG "SprdCameraOEM"
 //#include <linux/delay.h>
@@ -26,7 +27,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <math.h>
-#include <semaphore.h>
 
 #include "../sc8810/SprdOEMCamera.h"
 #include "jpeg_exif_header.h"
@@ -39,7 +39,7 @@
 
 namespace android{
 
-#define PREVIEW_BUF_NUM 4
+#define PREVIEW_BUF_NUM 8
 #define CAPTURE_BUF_NUM 1
 #define JPEGENC_BUF_NUM 1
 #define JPEGDECENC_Y_UV_OFFSET_MAX  0x400000
@@ -52,7 +52,6 @@ namespace android{
 
 #define PREVIEW_ENDIAN_H 1
 #define JPEG_DIV                       4
-#define JPEG_ENCODE_SLICE_HEIGHT_THRESHOLD 1024
 
 typedef struct zoom_trim_rect{
 	uint32_t x;
@@ -217,8 +216,6 @@ static uint32_t s_af_is_stop = 1;
 static uint32_t s_af_is_cancel = 0;
 static uint32_t g_encoder_is_end = 1;
 
-static sem_t g_capture_encode_thrd_sync_sem;
-
 /* exif  info*/
 LOCAL JINF_EXIF_INFO_T 			g_dc_exif_info;
 
@@ -234,12 +231,6 @@ LOCAL EXIF_PRI_DESC_T                 		*g_dc_primary_img_desc_ptr;
 /* get from sensor_drv */
 LOCAL EXIF_SPEC_PIC_TAKING_COND_T     	*g_dc_spec_pic_taking_cond_ptr;
 
-int camera_rotation(uint32_t agree, uint32_t width, uint32_t height, uint32_t in_addr, uint32_t out_addr);
-void camera_capture_change_memory(uint32_t output_width, uint32_t output_height,  uint32_t output_addr, uint32_t input_addr);
-
-#ifdef CONFIG_CAMERA_ROTATION_CAPTURE
-extern uint32_t getSensorFixRotation(int sensorId);
-#endif
 
 static void close_device(void);
 static int camera_copy(SCALE_DATA_FORMAT_E output_fmt, uint32_t output_width, uint32_t output_height, uint32_t output_y_addr,
@@ -270,42 +261,6 @@ static int device_write(int fd, uint8_t *buf, uint32_t count)
         r = write(fd, buf, count);
         return r;
 }
-
-
-#ifdef CONFIG_CAMERA_ROTATION_CAPTURE
-static uint32_t getRotation(/*IN*/ uint32_t sensorId, 
-                            /*IN*/ uint32_t setEncodeRotation,
-                            /*OUT*/uint32_t &ajustRotation)
-{
-    uint32_t needExchange = 0;
-    uint32_t sensorFixRotation = getSensorFixRotation(sensorId);
-
-    //assert(0 == setEncodeRotation || 90 == setEncodeRotation
-    //       || 180 == setEncodeRotation || 270 == setEncodeRotation);
-    uint32_t fixRotationFactor = (sensorFixRotation / 90) % 2;
-    uint32_t encodeRotationFactor = (setEncodeRotation / 90) % 2;
-     
-
-    if (0 == sensorId) {//back Camera
-        if (fixRotationFactor == encodeRotationFactor) {
-            needExchange = 1;
-        }
-        ajustRotation = setEncodeRotation;
-    }
-    else if( 1 == sensorId) {//front camera, so we should do the mirror case
-        if (0 == setEncodeRotation || 180 == setEncodeRotation) {
-            ajustRotation = 180 - setEncodeRotation;
-        }
-        else {
-            ajustRotation = setEncodeRotation;
-        }
-        if (fixRotationFactor == encodeRotationFactor) {
-            needExchange = 1;
-        }
-    }
-    return needExchange;
-}
-#endif
 
 uint32_t camera_get_size_align_page(uint32_t size)
 {
@@ -515,6 +470,8 @@ static uint32_t getOrientationFromRotationDegrees(int degrees)
 
 void camera_jpegenc_write_ping_buffer(uint32_t y_ping_addr,uint32_t uv_ping_addr)
 {
+	ZOOM_TRIM_RECT_T trim_rect;
+	uint32_t i=0;
 	uint32_t size = 0;
 	uint32_t slice_height = 1024;
 	uint32_t *src_y_ptr = g_capture_virt_addr;
@@ -538,7 +495,6 @@ void camera_jpegenc_write_ping_buffer(uint32_t y_ping_addr,uint32_t uv_ping_addr
 
 	ALOGV("camera_jpegenc_write_ping_buffer slice_height=%d.",slice_height);
 
-	dst_uv_ptr = s_camera_info.jpg_enc_y_temp_virt_addr + (g_dcam_dimensions.picture_width * slice_height)/4;
 	memcpy(dst_uv_ptr,src_uv_ptr,size*slice_height/2);
 
 	s_camera_info.jpg_record_copy_height += slice_height;
@@ -546,6 +502,7 @@ void camera_jpegenc_write_ping_buffer(uint32_t y_ping_addr,uint32_t uv_ping_addr
 
 void camera_jpegenc_update_data_callback(uint32_t dst_y_virt_addr, uint32_t dst_uv_virt_addr, uint32_t dst_height)
 {
+	uint32_t i=0;
 	uint32_t size=0;
 	uint32_t slice_height=1024;
 	uint32_t *src_y_ptr;
@@ -554,12 +511,14 @@ void camera_jpegenc_update_data_callback(uint32_t dst_y_virt_addr, uint32_t dst_
 	uint32_t *dst_uv_ptr = s_camera_info.jpg_enc_uv_temp_virt_addr;
 	uint32_t src_y_phy_ptr;
 	uint32_t src_uv_phy_ptr;
+	uint32_t dst_y_phy_ptr = s_camera_info.jpg_enc_y_temp_phy_addr;
+	uint32_t dst_uv_phy_ptr = s_camera_info.jpg_enc_uv_temp_phy_addr;
+	ZOOM_TRIM_RECT_T trim_rect;
 
 	if(0 != s_camera_info.jpeg_codec_slice_height)
 	{
 		slice_height = s_camera_info.jpeg_codec_slice_height;
 	}
-	dst_uv_ptr = s_camera_info.jpg_enc_y_temp_virt_addr + (g_dcam_dimensions.picture_width * slice_height)/4;
 
 	size = g_dcam_dimensions.picture_width*s_camera_info.jpg_record_copy_height;
 	src_y_ptr = g_capture_virt_addr+size/4;
@@ -582,6 +541,11 @@ void camera_jpegenc_update_data_callback(uint32_t dst_y_virt_addr, uint32_t dst_
 
 	memcpy(dst_y_ptr,src_y_ptr,size);
 	memcpy(dst_uv_ptr,src_uv_ptr,size/2);
+
+       trim_rect.x = 0;
+	trim_rect.y = 0;
+	trim_rect.w = g_dcam_dimensions.picture_width;
+	trim_rect.h = slice_height;
 
 	//camera_copy(SCALE_DATA_YUV420,trim_rect.w,trim_rect.h,dst_y_phy_ptr,dst_uv_phy_ptr,
 	//	                   &trim_rect,src_y_phy_ptr,src_uv_phy_ptr,SCALE_DATA_YUV420);
@@ -884,7 +848,7 @@ void camera_set_exif_info(void)
 	ALOGV("camera_set_exif_info: virtual get value = %x, ptr=%x \n",
 		dc_exif_info_ptr_virt->primary.basic.ResolutionUnit , dc_exif_info_ptr_virt->primary.basic.XResolution.numerator);
 
-	queryparm.id 		= (uint32)dc_exif_info_ptr_virt;
+ 	queryparm.id 		= (uint32)dc_exif_info_ptr_phy;
 	queryparm.index 	= g_jpegenc_params.stream_buf_len;
 
         ret =  xioctl(fd, VIDIOC_QUERYMENU, &queryparm);
@@ -932,13 +896,10 @@ void *camera_encoder_thread(void *client_data)
 	uint32_t* jpeg_enc_buf_virt_addr;
 	uint32_t jpeg_enc_buf_len;
 	uint32_t i;
-
 	g_encoder_is_end = 0;
 	ALOGV("camera_encoder_thread S. 0x%x 0x%x 0x%x 0x%x",
 		  g_buffers[g_releasebuff_index].virt_addr,g_buffers[g_releasebuff_index].phys_addr,
 		  s_camera_info.jpg_enc_y_temp_virt_addr,s_camera_info.jpg_enc_y_temp_phy_addr);
-
-	sem_post(&g_capture_encode_thrd_sync_sem);
 
 	g_client_data = client_data;
 	g_jpegenc_params.format = JPEGENC_YUV_420;
@@ -974,19 +935,11 @@ void *camera_encoder_thread(void *client_data)
 		}
 		else
 		{
-			if(g_dcam_dimensions.picture_height  > JPEG_ENCODE_SLICE_HEIGHT_THRESHOLD)
-			{
-				g_jpegenc_params.yuv_virt_buf = s_camera_info.jpg_enc_y_temp_virt_addr;
-				g_jpegenc_params.yuv_phy_buf = s_camera_info.jpg_enc_y_temp_phy_addr;
-			}
-			else
-			{
-				g_jpegenc_params.yuv_virt_buf = g_capture_virt_addr;
-				g_jpegenc_params.yuv_phy_buf = g_capture_phys_addr;
-			}
+			g_jpegenc_params.yuv_virt_buf = s_camera_info.jpg_enc_y_temp_virt_addr;
+			g_jpegenc_params.yuv_phy_buf = s_camera_info.jpg_enc_y_temp_phy_addr;
 		}
-
 	}
+
 	ALOGV("camera_encoder_thread ,jpg tmp 0x%x 0x%x",g_jpegenc_params.yuv_virt_buf,g_jpegenc_params.yuv_phy_buf);
 
 	g_jpegenc_params.set_slice_height = s_camera_info.jpeg_codec_slice_height;
@@ -1122,42 +1075,6 @@ camera_ret_code_type camera_encode_picture(
 	pthread_attr_t attr;
 	g_callback = callback;
 
-#ifdef CONFIG_CAMERA_ROTATION_CAPTURE
-{
-        uint32_t needExchange = 0;
-        uint32_t ajustRotation = 0;
-        needExchange = getRotation(g_dcam_obj->getCameraId(),
-                                   s_camera_info.set_encode_rotation,
-                                   ajustRotation);
-        if (0 != ajustRotation) {
-            uint32_t size = s_camera_info.dcam_out_width * s_camera_info.dcam_out_height * 2;
-            uint32_t phys_addr;
-            uint32_t ret;
-            uint32_t *virt_addr = (uint32_t *)(g_dcam_obj->get_temp_mem_by_HW(size, 1, &phys_addr));
-            if (NULL == virt_addr) {
-                    ALOGE("SPRD OEM:Fail to malloc capture temp memory in camera_encode_picture, size: 0x%x.", size);
-                    return CAMERA_FAILED;
-            }
-            camera_capture_change_memory(s_camera_info.dcam_out_width, s_camera_info.dcam_out_height,
-                                     (uint32_t)virt_addr, 
-                                     (uint32_t)((uint8_t *)(frame->buf_Virt_Addr)));
-            ret = camera_rotation(ajustRotation, s_camera_info.dcam_out_width,
-                                  s_camera_info.dcam_out_height, phys_addr,
-                                  frame->buffer_phy_addr);
-            g_dcam_obj->free_temp_mem_by_HW();
-        }
-        if (needExchange) {
-            uint32_t temp = g_dcam_dimensions.picture_width;
-            g_dcam_dimensions.picture_width = g_dcam_dimensions.picture_height;
-            g_dcam_dimensions.picture_height = temp;
-            temp = g_thumbnail_properties.width;
-            g_thumbnail_properties.width = g_thumbnail_properties.height;
-            g_thumbnail_properties.height = temp;
-        }
-        s_camera_info.set_encode_rotation = 0;
-}
-#endif
-
 #if !CAM_OUT_YUV420_UV	//wxz20120316: convrt VU to UV
 {
 	uint8_t *dst = (uint8_t *)frame->buf_Virt_Addr + frame->dx * frame->dy;
@@ -1173,29 +1090,20 @@ camera_ret_code_type camera_encode_picture(
 	src = NULL;
 }
 #endif
-
-
-	sem_init(&g_capture_encode_thrd_sync_sem, 0, 0);
-
 	//create the thread for encoder
 	pthread_attr_init (&attr);
          pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	if(0 !=  pthread_create(&g_encoder_thr, &attr, camera_encoder_thread, client_data))	
 	{
 		ALOGE("Fail to careate thread in encoder mode.");
-		goto out;
+		return CAMERA_FAILED;
+	}
+	else
+	{
+		ALOGV("OK to create thread in encoder mode.");
 	}
 
-	sem_wait(&g_capture_encode_thrd_sync_sem);
-	sem_destroy(&g_capture_encode_thrd_sync_sem);
-
-	ALOGV("OK to create thread in encoder mode.");
-
 	return ret_type;
-out:
-	sem_destroy(&g_capture_encode_thrd_sync_sem);
-
-	return CAMERA_FAILED;
 }
 
 static int open_device(void)
@@ -1793,7 +1701,6 @@ static int camera_cap_zoom_colorformat(SCALE_DATA_FORMAT_E output_fmt, uint32_t 
 	ISP_ENDIAN_T in_endian;
 	ISP_ENDIAN_T out_endian;
          int ret = 0;
-	uint32_t scaling_mode = 0;
 
 	fd = open("/dev/sprd_scale", O_RDONLY);//O_RDWR /* required */, 0);
 	if (-1 == fd)
@@ -1951,15 +1858,6 @@ static int camera_cap_zoom_colorformat(SCALE_DATA_FORMAT_E output_fmt, uint32_t 
 		ret = -1;
                   goto CAP_ZOOM_COLORFORM_END;
 	}
-	//set rotation mode
-	scale_config.id = SCALE_PATH_ROT_MODE;
-	scale_config.param = &scaling_mode;
-	if (-1 == ioctl(fd, SCALE_IOC_CONFIG, &scale_config))
-	{
-		ALOGE("Fail to SCALE_IOC_CONFIG: id=%d", scale_config.id);
-		ret = -1;
-                  goto CAP_ZOOM_COLORFORM_END;
-	}
 
 	//done
 	if (-1 == xioctl(fd, SCALE_IOC_DONE, 0))
@@ -1993,7 +1891,6 @@ static int camera_copy(SCALE_DATA_FORMAT_E output_fmt, uint32_t output_width, ui
 	ISP_ENDIAN_T in_endian;
 	ISP_ENDIAN_T out_endian;
          int ret = 0;
-	uint32_t scaling_mode = 0;
 
 	//ALOGE("[SPRD OEM]:camera_copy %d %d %d %d \n",trim_rect->w ,output_width,trim_rect->h,output_height);
 
@@ -2131,15 +2028,6 @@ static int camera_copy(SCALE_DATA_FORMAT_E output_fmt, uint32_t output_width, ui
 		ret = -1;
                   goto CAMERA_COPY_END;
 	}
-	//set rotation mode
-	scale_config.id = SCALE_PATH_ROT_MODE;
-	scale_config.param = &scaling_mode;
-	if (-1 == ioctl(fd, SCALE_IOC_CONFIG, &scale_config))
-	{
-		ALOGE("[SPRD OEM ERR]:camera_format_convert,Fail to SCALE_IOC_CONFIG: id=%d", scale_config.id);
-		ret = -1;
-                  goto CAMERA_COPY_END;
-	}
 
 	//done
 	if (-1 == xioctl(fd, SCALE_IOC_DONE, 0))
@@ -2171,7 +2059,6 @@ static int camera_format_convert(SCALE_DATA_FORMAT_E output_fmt, uint32_t output
 	ISP_ENDIAN_T in_endian;
 	ISP_ENDIAN_T out_endian;
          int ret = 0;
-	uint32_t scaling_mode = 0;
 
 	if((trim_rect->w != output_width) || (trim_rect->h != output_height))
 	{
@@ -2307,15 +2194,6 @@ static int camera_format_convert(SCALE_DATA_FORMAT_E output_fmt, uint32_t output
 		ret =  -1;
                   goto CAMERA_FORMAT_CONVERT_END;
 	}
-	//set rotation mode
-	scale_config.id = SCALE_PATH_ROT_MODE;
-	scale_config.param = &scaling_mode;
-	if (-1 == ioctl(fd, SCALE_IOC_CONFIG, &scale_config))
-	{
-		ALOGE("[SPRD OEM ERR]:camera_format_convert,Fail to SCALE_IOC_CONFIG: id=%d", scale_config.id);
-		ret =  -1;
-                  goto CAMERA_FORMAT_CONVERT_END;
-	}
 
 	//done
 	if (-1 == xioctl(fd, SCALE_IOC_DONE, 0))
@@ -2400,7 +2278,6 @@ static int camera_scale_functions(SCALE_DATA_FORMAT_E output_fmt, uint32_t outpu
 	ISP_ENDIAN_T in_endian;
 	ISP_ENDIAN_T out_endian;
          int ret = 0;
-	uint32_t scaling_mode = 0;
 
 	fd = open("/dev/sprd_scale", O_RDONLY);
 	if (-1 == fd)
@@ -2556,15 +2433,6 @@ static int camera_scale_functions(SCALE_DATA_FORMAT_E output_fmt, uint32_t outpu
 		ret = -1;
                   goto CAMERA_SCALE_FUNCTIONS_END;
 	}
-	//set rotation mode
-	scale_config.id = SCALE_PATH_ROT_MODE;
-	scale_config.param = &scaling_mode;
-	if (-1 == ioctl(fd, SCALE_IOC_CONFIG, &scale_config))
-	{
-		ALOGE("[SPRD OEM ERR]:camera_interpolation,Fail to SCALE_IOC_CONFIG: id=%d", scale_config.id);
-		ret = -1;
-                  goto CAMERA_SCALE_FUNCTIONS_END;
-	}
 
 	//done
 	if (-1 == xioctl(fd, SCALE_IOC_DONE, 0))
@@ -2599,7 +2467,6 @@ static int camera_crop_interpolation(SCALE_DATA_FORMAT_E output_fmt, uint32_t ou
 	ISP_ENDIAN_T in_endian;
 	ISP_ENDIAN_T out_endian;
          int ret = 0;
-	uint32_t scaling_mode = 0;
 
 	fd = open("/dev/sprd_scale", O_RDONLY);
 	if (-1 == fd)
@@ -2755,15 +2622,6 @@ static int camera_crop_interpolation(SCALE_DATA_FORMAT_E output_fmt, uint32_t ou
 	{
 		ALOGE("[SPRD OEM ERR]:camera_interpolation,Fail to SCALE_IOC_CONFIG: id=%d", scale_config.id);
                   ret = -1;        
-		goto CROP_INTERPOLATION_END;
-	}
-	//set rotation mode
-	scale_config.id = SCALE_PATH_ROT_MODE;
-	scale_config.param = &scaling_mode;
-	if (-1 == ioctl(fd, SCALE_IOC_CONFIG, &scale_config))
-	{
-		ALOGE("[SPRD OEM ERR]:camera_interpolation,Fail to SCALE_IOC_CONFIG: id=%d", scale_config.id);
-		ret = -1;
 		goto CROP_INTERPOLATION_END;
 	}
 
@@ -4031,9 +3889,9 @@ void camera_jpegdec_callback(uint32_t src_y_phy_addr, uint32_t src_uv_phy_addr, 
 
 	src_height = s_camera_info.jpeg_codec_slice_height ? s_camera_info.jpeg_codec_slice_height : 1024;
 
-         if((s_camera_info.jpg_record_copy_height+src_height) >s_camera_info.dcam_out_height)
+         if((s_camera_info.jpg_record_copy_height+src_height) >g_dcam_dimensions.picture_height)
          	{
-			src_height = s_camera_info.dcam_out_height-s_camera_info.jpg_record_copy_height;
+         		src_height = g_dcam_dimensions.picture_height-s_camera_info.jpg_record_copy_height;
 		if(0 == src_height)
 		{
 			ALOGV("camera_jpegdec_callback copy fail!");
@@ -4310,7 +4168,6 @@ void *camera_capture_thread(void *client_data)
 		picture_width = g_dcam_dimensions.picture_height;
 		picture_height= g_dcam_dimensions.picture_width;
 	}
-
 	if(s_camera_info.is_zoom || s_camera_info.is_interpolation)
 	{
 		ALOGV("SPRD OEM:camera_capture_thread,dcam out:w=%d,h=%d.picture size %d %d",
@@ -4324,13 +4181,6 @@ void *camera_capture_thread(void *client_data)
 		trim_rect.w = s_camera_info.dcam_out_width;
 		trim_rect.h = s_camera_info.dcam_out_height;
 		camera_get_zoom_trim(&trim_rect,g_hal_zoom_level);
-
-		if(trim_rect.w == g_dcam_dimensions.picture_width || trim_rect.h == g_dcam_dimensions.picture_height)
-		{
-                        trim_rect.w -= DCAMERA_PIXEL_ALIGNED;
-                        trim_rect.h -= DCAMERA_PIXEL_ALIGNED;
-		}
-
 		ALOGV("SPRD OEM:camera_capture_thread,yuv with zoom,trim:x=%d,y=%d,w=%d,h=%d. dst %d %D" ,
                                 trim_rect.x,trim_rect.y,trim_rect.w,trim_rect.h,
                                 g_dcam_dimensions.picture_width,g_dcam_dimensions.picture_height);
@@ -4368,7 +4218,6 @@ void *camera_capture_thread(void *client_data)
                                     s_camera_info.dcam_out_width,
                                     s_camera_info.dcam_out_height);
 
-                    }
  #if 0
     {
 		FILE *fp = NULL;
@@ -4379,11 +4228,13 @@ void *camera_capture_thread(void *client_data)
 		fp = fopen("/data/sensor_yy.raw", "wb");
 		fwrite(g_buffers[0].virt_addr, 1, s_camera_info.dcam_out_width*s_camera_info.dcam_out_height, fp);
                    fclose(fp);
-		fp = fopen("/data/sensor_uv_uv1.raw", "wb");
+		fp = fopen("/data/sensor_uv_uv.raw", "wb");
 		fwrite( g_buffers[0].u_virt_addr, 1, s_camera_info.dcam_out_width*s_camera_info.dcam_out_height, fp);
 		fclose(fp);
    }
 #endif
+
+                    }
 		ret = camera_crop_interpolation(SCALE_DATA_YUV422,
                                                                      picture_width,//            g_dcam_dimensions.picture_width,
                                                                          picture_height,//        g_dcam_dimensions.picture_height,
@@ -4407,7 +4258,6 @@ void *camera_capture_thread(void *client_data)
 		ALOGE(" s_camera_info.temp_y_phy_addr,=0x%x.", s_camera_info.temp_y_phy_addr);
 		fp = fopen("/data/sensor_y.raw", "wb");
 		fwrite(s_camera_info.temp_y_virt_addr, 1, g_dcam_dimensions.picture_width*g_dcam_dimensions.picture_height, fp);
-                fclose(fp);
 		fp = fopen("/data/sensor_uv.raw", "wb");
 		fwrite(s_camera_info.temp_uv_virt_addr, 1, g_dcam_dimensions.picture_width*g_dcam_dimensions.picture_height, fp);
 		fclose(fp);
@@ -4428,7 +4278,7 @@ void *camera_capture_thread(void *client_data)
 
           if(1==s_camera_info.is_need_rotation)
 	{
-		uint32_t size = s_camera_info.dcam_out_width * s_camera_info.dcam_out_height * 2;
+		uint32_t size = s_camera_info.dcam_out_width * s_camera_info.dcam_out_width* 2;
 		uint32_t phys_addr;
 		uint32_t *virt_addr;
 		if(NULL == (virt_addr = (uint32_t *)g_dcam_obj->get_temp_mem_by_HW(size, 1, &phys_addr)))
@@ -4498,17 +4348,6 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
     uint32_t    jpg_cap_size = 0;
     uint32_t    page_size = 0;
     int32_t ret = 0;
-    uint32_t    is_need_scaledown = 0;
-
-    if(dcam_out_width * dcam_out_height > g_dcam_dimensions.picture_width*g_dcam_dimensions.picture_height)
-    {
-        is_need_scaledown =1;
-        frame_size = dcam_out_width * dcam_out_height * 2;
-    }
-    else
-    {
-        frame_size = g_dcam_dimensions.picture_width *g_dcam_dimensions.picture_height * 2;
-    }
 
     s_camera_info.jpeg_buf_setting_flag = 0;
     s_camera_info.jpeg_codec_slice_height = 0;
@@ -4530,29 +4369,27 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
     }
 
     if(g_dcam_dimensions.picture_width*g_dcam_dimensions.picture_height >= JPEGDECENC_Y_UV_OFFSET_MAX ||
-        dcam_out_width * dcam_out_height>= JPEGDECENC_Y_UV_OFFSET_MAX ||
        ((mem_size>>1) >= JPEGDECENC_Y_UV_OFFSET_MAX && (s_camera_info.is_interpolation ||  s_camera_info.is_zoom)&&(SENSOR_IMAGE_FORMAT_JPEG == s_camera_info.sensor_out_format) ))
     {
-        frame_size = camera_get_size_align_page(frame_size);
-        mem_offset = frame_size ;
+        frame_size = g_dcam_dimensions.picture_width *g_dcam_dimensions.picture_height * 2;
+        buffer_size = camera_get_size_align_page(frame_size);
         s_camera_info.jpeg_buf_setting_flag = 1;
         s_camera_info.jpeg_codec_slice_height = 128;
-        if(is_need_scaledown)
-            buffer_size = dcam_out_width * s_camera_info.jpeg_codec_slice_height;
-        else
-            buffer_size = g_dcam_dimensions.picture_width*s_camera_info.jpeg_codec_slice_height;
+        mem_offset = buffer_size ;
+        frame_size = g_dcam_dimensions.picture_width*s_camera_info.jpeg_codec_slice_height;
 
-        if((mem_offset + (buffer_size << 1)+jpg_cap_size ) >  mem_size)
+        if((mem_offset + (frame_size << 1)+jpg_cap_size ) >  mem_size)
         {
-            if(NULL == (virt_addr = (uint32_t *)g_dcam_obj->get_temp_mem_by_jpegslice((buffer_size<<1) + jpg_cap_size, 1, &phys_addr)))
+            if(NULL == (virt_addr = (uint32_t *)g_dcam_obj->get_temp_mem_by_jpegslice((frame_size<<1) + jpg_cap_size, 1, &phys_addr)))
             {
                 ALOGV("SPRD OEM: Error,No mem for  jpg tmp buffer");
                 ret = -1;
             }
             s_camera_info.jpg_y_temp_phy_addr = phys_addr;
             s_camera_info.jpg_y_temp_virt_addr = virt_addr;
-            s_camera_info.jpg_uv_temp_phy_addr = s_camera_info.jpg_y_temp_phy_addr+buffer_size;
-            s_camera_info.jpg_uv_temp_virt_addr = s_camera_info.jpg_y_temp_virt_addr+buffer_size/4;
+            mem_offset = g_dcam_dimensions.picture_width*s_camera_info.jpeg_codec_slice_height;
+            s_camera_info.jpg_uv_temp_phy_addr = s_camera_info.jpg_y_temp_phy_addr+frame_size;
+            s_camera_info.jpg_uv_temp_virt_addr = s_camera_info.jpg_y_temp_virt_addr+frame_size/4;
             s_camera_info.jpg_enc_y_temp_phy_addr = s_camera_info.jpg_y_temp_phy_addr;
             s_camera_info.jpg_enc_y_temp_virt_addr = s_camera_info.jpg_y_temp_virt_addr;
             s_camera_info.jpg_enc_uv_temp_phy_addr = s_camera_info.jpg_uv_temp_phy_addr;
@@ -4560,8 +4397,8 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
 
             if(jpg_cap_size)
             {
-                phys_addr = phys_addr + (buffer_size<<1);
-                virt_addr = virt_addr +  (buffer_size>>1);
+                phys_addr = phys_addr + (frame_size<<1);
+                virt_addr = virt_addr +  (frame_size>>1);
                 ALOGV("SPRD OEM:camera_capture_mem_alloc,jpeg capture buffer, phy:0x%x, virt:0x%x",
                 phys_addr, virt_addr);
 
@@ -4578,17 +4415,18 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
                 phys_addr = g_capture_phys_addr+mem_offset;
                 virt_addr =g_capture_virt_addr+mem_offset/4;
             }
-            mem_offset = buffer_size*2;
+            mem_offset = frame_size*2;
             mem_offset = mem_size - mem_offset-jpg_cap_size;
             s_camera_info.jpg_y_temp_phy_addr = g_capture_phys_addr+mem_offset;
             s_camera_info.jpg_y_temp_virt_addr = g_capture_virt_addr+mem_offset/4;
-            s_camera_info.jpg_uv_temp_phy_addr = s_camera_info.jpg_y_temp_phy_addr+buffer_size;
-            s_camera_info.jpg_uv_temp_virt_addr = s_camera_info.jpg_y_temp_virt_addr+buffer_size/4;
+            mem_offset = g_dcam_dimensions.picture_width*s_camera_info.jpeg_codec_slice_height;
+            s_camera_info.jpg_uv_temp_phy_addr = s_camera_info.jpg_y_temp_phy_addr+mem_offset;
+            s_camera_info.jpg_uv_temp_virt_addr = s_camera_info.jpg_y_temp_virt_addr+mem_offset/4;
             s_camera_info.jpg_enc_y_temp_phy_addr = s_camera_info.jpg_y_temp_phy_addr;
             s_camera_info.jpg_enc_y_temp_virt_addr = s_camera_info.jpg_y_temp_virt_addr;
             s_camera_info.jpg_enc_uv_temp_phy_addr = s_camera_info.jpg_uv_temp_phy_addr;
             s_camera_info.jpg_enc_uv_temp_virt_addr = s_camera_info.jpg_uv_temp_virt_addr;
-            slice_temp_size = buffer_size*2+jpg_cap_size;
+            slice_temp_size = frame_size*2+jpg_cap_size;
         }
 
         ALOGV("SPRD OEM:camera_capture_mem_alloc,jpeg codec temp buffer, phy:0x%x,0x%x,virt:0x%x,0x%x.",
@@ -4599,8 +4437,9 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
     {
         if(SENSOR_IMAGE_FORMAT_JPEG == s_camera_info.sensor_out_format)
         {
-            frame_size = camera_get_size_align_page(frame_size);
-            mem_offset = frame_size ;
+            frame_size = g_dcam_dimensions.picture_width *g_dcam_dimensions.picture_height * 2;
+            buffer_size = camera_get_size_align_page(frame_size);
+            mem_offset = buffer_size ;
             if((mem_offset + jpg_cap_size ) >  mem_size)
             {
                 if(NULL == (virt_addr = (uint32_t *)g_dcam_obj->get_temp_mem_by_jpegslice(jpg_cap_size, 1, &phys_addr)))
@@ -4626,6 +4465,8 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
 
     if(SENSOR_IMAGE_FORMAT_JPEG != s_camera_info.sensor_out_format)
     {
+        frame_size = g_dcam_dimensions.picture_width *g_dcam_dimensions.picture_height * 2;
+        buffer_size = camera_get_size_align_page(frame_size);
         if(s_camera_info.is_interpolation ||  s_camera_info.is_zoom)
         {
             // whatever it needs interpolation or zoom,  the capture YUV buffer and the destination buffer
@@ -4644,6 +4485,7 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
                         0,(uint32_t)g_buffers[0].virt_addr,g_buffers[0].u_virt_addr,g_buffers[0].phys_addr,g_buffers[0].u_phys_addr ,
                         g_buffers[0].length);
             /*first capture buffer*/
+
             s_camera_info.temp_y_phy_addr = g_capture_phys_addr;
             s_camera_info.temp_y_virt_addr = g_capture_virt_addr;
             s_camera_info.temp_uv_phy_addr = g_capture_phys_addr+mem_size/2;
@@ -4653,8 +4495,7 @@ int camera_capture_mem_alloc(uint32_t dcam_out_width,uint32_t dcam_out_height)
         else
         {
                //no interpolation or zoom, just alloc capture buffer;
-                buffer_size = camera_get_size_align_page(frame_size);
-                g_buffers[0].length = buffer_size;
+               g_buffers[0].length = buffer_size;
                 g_buffers[0].virt_addr = g_capture_virt_addr;
                 g_buffers[0].phys_addr = g_capture_phys_addr;
                 g_buffers[0].u_virt_addr = g_capture_virt_addr + (frame_size >> 3) ;
@@ -4746,7 +4587,6 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 	uint32_t buffer_size, page_size, frame_size;
 	struct v4l2_streamparm streamparm;
 	uint32_t ret = 0;
-	uint32_t sensor_output_w = 0, sensor_output_h = 0;
 
 	s_camera_info.rot_angle = 0;
 	s_camera_info.is_interpolation = 0;
@@ -4754,8 +4594,6 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 	s_camera_info.dcam_out_width = 0;
 	s_camera_info.dcam_out_height = 0;
 	s_camera_info.is_zoom = 0;
-
-        camera_get_sensor_output_size(&sensor_output_w, &sensor_output_h);
 
 	CLEAR (fmt);
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;    
@@ -4768,28 +4606,28 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 
 		if( 90 == g_rotation_parm)
 		{
-			fmt.fmt.pix.width = sensor_output_h;   //g_dcam_dimensions.picture_height;
-		        fmt.fmt.pix.height = sensor_output_w;    //g_dcam_dimensions.picture_width;
+			fmt.fmt.pix.width = g_dcam_dimensions.picture_height;
+		        fmt.fmt.pix.height = g_dcam_dimensions.picture_width;
 			fmt.fmt.raw_data[198] = 1;
 		}
 		else if(270 == g_rotation_parm)
 		{
-			fmt.fmt.pix.width = sensor_output_h;    //g_dcam_dimensions.picture_height;
-		        fmt.fmt.pix.height = sensor_output_w;    //g_dcam_dimensions.picture_width;
+			fmt.fmt.pix.width = g_dcam_dimensions.picture_height;
+		        fmt.fmt.pix.height = g_dcam_dimensions.picture_width;
 			fmt.fmt.raw_data[198] = 2;
 		}
 		else if (180 == g_rotation_parm)
 		{
 			fmt.fmt.raw_data[198] = 3;
-			fmt.fmt.pix.width = sensor_output_w;    //g_dcam_dimensions.picture_width;
-		        fmt.fmt.pix.height = sensor_output_h;   //g_dcam_dimensions.picture_height;
+			fmt.fmt.pix.width = g_dcam_dimensions.picture_width;
+		        fmt.fmt.pix.height = g_dcam_dimensions.picture_height;
 		}
 	}
 	else
 	{
                 /* 0 */
-		fmt.fmt.pix.width = sensor_output_w;  //g_dcam_dimensions.picture_width
-	        fmt.fmt.pix.height = sensor_output_h;  //g_dcam_dimensions.picture_height
+		fmt.fmt.pix.width = g_dcam_dimensions.picture_width;
+	        fmt.fmt.pix.height = g_dcam_dimensions.picture_height;
 	}
 
 	if(SENSOR_IMAGE_FORMAT_JPEG != s_camera_info.sensor_out_format)
@@ -4860,7 +4698,7 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 	}
          if((1 == g_cam_params.orientation_parm)&&((90 == g_rotation_parm)||(270 == g_rotation_parm)))
          {
-                    if((fmt.fmt.pix.width != g_dcam_dimensions.picture_height) || (fmt.fmt.pix.height != g_dcam_dimensions.picture_width))
+                    if((fmt.fmt.pix.width<g_dcam_dimensions.picture_height) || (fmt.fmt.pix.height<g_dcam_dimensions.picture_width))
                     {
                                 ALOGV(" camera_capture_init:need interpolation,pic size:%d,%d\n",
                                 g_dcam_dimensions.picture_width,g_dcam_dimensions.picture_height);
@@ -4869,7 +4707,7 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
         }
         else
         {
-	if((fmt.fmt.pix.width != g_dcam_dimensions.picture_width) || (fmt.fmt.pix.height != g_dcam_dimensions.picture_height))
+	if((fmt.fmt.pix.width<g_dcam_dimensions.picture_width) || (fmt.fmt.pix.height<g_dcam_dimensions.picture_height))
 	{
 		ALOGV(" camera_capture_init:need interpolation,pic size:%d,%d\n",
 		g_dcam_dimensions.picture_width,g_dcam_dimensions.picture_height);
@@ -4909,18 +4747,8 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 		ALOGE("Fail to VIDIOC_REQBUFS.");
 		return -1;
 	}
-
-	//camera_get_sensor_output_size(&sensor_output_w, &sensor_output_h);
-	if((sensor_output_w * sensor_output_h) > (fmt.fmt.pix.width * fmt.fmt.pix.height))
-	{
-		s_camera_info.dcam_out_width = sensor_output_w;
-		s_camera_info.dcam_out_height= sensor_output_h;
-	}
-	else
-	{
-		s_camera_info.dcam_out_width = fmt.fmt.pix.width;
-		s_camera_info.dcam_out_height = fmt.fmt.pix.height;
-	}
+	s_camera_info.dcam_out_width = fmt.fmt.pix.width;
+	s_camera_info.dcam_out_height = fmt.fmt.pix.height;
 	s_camera_info.cap_mem_size = mem_size;
 
 	ALOGV("camera_capture_init:dcam output,w=%d,h=%d .\n",s_camera_info.dcam_out_width,s_camera_info.dcam_out_height);
@@ -4934,21 +4762,14 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 
 	if(SENSOR_IMAGE_FORMAT_JPEG == s_camera_info.sensor_out_format)
 	{
-		if((sensor_output_w * sensor_output_h) > (fmt.fmt.pix.width * fmt.fmt.pix.height))
-		{
-			s_camera_info.jpg_out_align_w = JPEG_OUT_ALIGN_W(sensor_output_w);
-			s_camera_info.jpg_out_align_h = JPEG_OUT_ALIGN_W(sensor_output_h);
-		}
-		else
-		{
-			s_camera_info.jpg_out_align_w = JPEG_OUT_ALIGN_W(fmt.fmt.pix.width);
-			s_camera_info.jpg_out_align_h = JPEG_OUT_ALIGN_H(fmt.fmt.pix.height);
-		}
+		s_camera_info.jpg_out_align_w = JPEG_OUT_ALIGN_W(fmt.fmt.pix.width);
+		s_camera_info.jpg_out_align_h = JPEG_OUT_ALIGN_H(fmt.fmt.pix.height);
 	}
+
 	if((90==g_rotation_parm) || (270==g_rotation_parm))
 	{
-		if((s_camera_info.dcam_out_width !=  g_dcam_dimensions.picture_height)
-		||(s_camera_info.dcam_out_height != g_dcam_dimensions.picture_width))
+		if((s_camera_info.dcam_out_width<  g_dcam_dimensions.picture_height)
+		||(s_camera_info.dcam_out_height<g_dcam_dimensions.picture_width))
 		{
 			s_camera_info.is_interpolation = 1;
 		}
@@ -4959,15 +4780,15 @@ int camera_capture_init(uint32_t mem_size,int32_t capture_fmat)
 	}
 	else
 	{
-	if((s_camera_info.dcam_out_width !=  g_dcam_dimensions.picture_width)
-		||(s_camera_info.dcam_out_height != g_dcam_dimensions.picture_height))
+	if((s_camera_info.dcam_out_width<  g_dcam_dimensions.picture_width)
+		||(s_camera_info.dcam_out_height<g_dcam_dimensions.picture_height))
 	{
 		s_camera_info.is_interpolation = 1;
 		ALOGV("SPRD OEM:camera_capture_init,nedd interpolation,dcam out:%d,%d",
 			    s_camera_info.dcam_out_width,s_camera_info.dcam_out_height);
 	}
 	}
-	ret = camera_capture_mem_alloc(s_camera_info.dcam_out_width,s_camera_info.dcam_out_height);
+	ret = camera_capture_mem_alloc(fmt.fmt.pix.width,fmt.fmt.pix.height);
 
 	if( 0 != ret)
 	{
@@ -5090,8 +4911,7 @@ camera_ret_code_type camera_take_picture (
 	uint32_t size;
 	uint32_t real_size = 0;
 	int32_t capture_format;
-	pthread_attr_t attr;
-	uint32_t sensor_output_w = 0, sensor_output_h = 0;
+         pthread_attr_t attr;
 
          g_stop_capture_flag = 0;
 	//record the callback function
@@ -5100,11 +4920,7 @@ camera_ret_code_type camera_take_picture (
 	s_camera_info.sensor_out_format = camera_get_capture_format(g_dcam_dimensions.picture_width);
 
 	//get the take picture memory
-	camera_get_sensor_output_size(&sensor_output_w, &sensor_output_h);
-	if((sensor_output_w * sensor_output_h) > ( g_dcam_dimensions.picture_width* g_dcam_dimensions.picture_height))
-		size = (sensor_output_w * sensor_output_h  * 2) * g_capture_buffer_num;
-	else
-		size = (g_dcam_dimensions.picture_width * g_dcam_dimensions.picture_height * 2) * g_capture_buffer_num;
+	size = (g_dcam_dimensions.picture_width * g_dcam_dimensions.picture_height * 2) * g_capture_buffer_num;
 	if(NULL == (g_capture_virt_addr = (uint32_t *)g_dcam_obj->get_raw_mem(size,&g_capture_phys_addr,0,&real_size)))
 	{
 		ALOGE("Fail to malloc capture memory, size: 0x%x.", size);
@@ -5255,29 +5071,6 @@ SENSOR_IMAGE_FORMAT_E camera_get_capture_format(uint32_t width)
 	ALOGV("CAMERA OEM:get sensor format = %d .\n",(uint32_t)image_format);
 	return image_format;
 }
-
-void camera_get_sensor_output_size(uint32_t *sensor_w, uint32_t *sensor_h)
-{
-	uint32_t i;
-	uint32_t picture_size = g_dcam_dimensions.picture_width * g_dcam_dimensions.picture_height;
-
-	for (i = 0; i < SENSOR_MODE_MAX; i++)
-	{
-
-		if(*sensor_w < s_camera_info.sensor_mode_info[i].width)
-		{
-			*sensor_w = s_camera_info.sensor_mode_info[i].width;
-			*sensor_h = s_camera_info.sensor_mode_info[i].height;
-		}
-
-		if(picture_size <= s_camera_info.sensor_mode_info[i].width * s_camera_info.sensor_mode_info[i].height)
-		{
-			break;
-		}
-
-	}
-}
-
 void rex_start()
 {
 	return;

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <stdlib.h>
 #include <fcntl.h>              /* low-level i/o */
 #include <sys/stat.h>
@@ -150,21 +149,12 @@ int arithmetic_fd_init(void)
 	struct camera_context  *cxt = camera_get_cxt();
 	unsigned char          *p_format = (unsigned char*)IMAGE_FORMAT;
 	int                    ret = ARITH_SUCCESS;
-	pthread_attr_t          attr;
 
 	CMR_LOGV("inited, %d", cxt->arithmetic_cxt.fd_inited);
 
 	if (cxt->arithmetic_cxt.fd_inited) {
-		FaceSolid_Finalize();
-		if ( 0 != FaceSolid_Init(cxt->display_size.height,
-		                     cxt->display_size.width,
-		                     p_format)) {
-			ret = -ARITH_INIT_FAIL;
-			CMR_LOGE("FaceSolid_Init fail.");
-		} else {
-			CMR_LOGI("FaceSolid_Init done.");
-		}
-		return ret;
+		CMR_LOGE("No need to init fd");
+		return 0;
 	}
 
 	CMR_PRINT_TIME;
@@ -184,9 +174,7 @@ int arithmetic_fd_init(void)
 		} else {
 			sem_init(&s_arith_cxt->fd_sync_sem, 0, 0);
 			pthread_mutex_init(&s_arith_cxt->fd_lock, NULL);
-			pthread_attr_init(&attr);
-			pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-			ret = pthread_create(&s_arith_cxt->fd_thread,  &attr, arithmetic_fd_thread_proc, NULL);
+			ret = pthread_create(&s_arith_cxt->fd_thread, NULL, arithmetic_fd_thread_proc, NULL);
 			cxt->arithmetic_cxt.fd_inited = 1;
 		}
 	}
@@ -306,46 +294,6 @@ int arithmetic_hdr_deinit(void)
 	CMR_LOGI("e.");
 	return ret;
 }
-static void save_input_data(uint32_t width,uint32_t height)
-{
-	FILE *fp = NULL;
-	uint32_t size = width*height*3/2;
-
-	fp = fopen("/data/1.raw", "wb");
-	if(0 != fp) {
-		fwrite((void*)s_hdr_cxt->addr[0], 1, size, fp);
-		fclose(fp);
-	}else{
-		CMR_LOGE("can not create savedata");
-	}
-	fp = fopen("/data/2.raw", "wb");
-	if(0 != fp) {
-		fwrite((void*)s_hdr_cxt->addr[1], 1, size, fp);
-		fclose(fp);
-	}else{
-		CMR_LOGE("can not create savedata");
-	}
-	fp = fopen("/data/3.raw", "wb");
-	if(0 != fp) {
-		fwrite((void*)s_hdr_cxt->addr[2], 1, size, fp);
-		fclose(fp);
-	}else{
-		CMR_LOGE("can not create savedata");
-	}
-}
-static void save_hdrdata(void *addr,uint32_t width,uint32_t height)
-{
-	FILE *fp = NULL;
-	uint32_t size = width*height*3/2;
-
-	fp = fopen("/data/4.raw", "wb");
-	if(0 != fp) {
-		fwrite((void*)addr, 1, size, fp);
-		fclose(fp);
-	}else{
-		CMR_LOGE("can not create savedata");
-	}
-}
 int arithmetic_hdr(unsigned char *dst_addr,uint32_t width,uint32_t height)
 {
 	int           ret = ARITH_SUCCESS;
@@ -360,8 +308,6 @@ int arithmetic_hdr(unsigned char *dst_addr,uint32_t width,uint32_t height)
 	temp_addr1 = s_hdr_cxt->addr[1];
 	temp_addr2 = s_hdr_cxt->addr[2];
 
-/*	save_input_data(width,height);*/
-
 	if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
 		if (0 != HDR_Function(temp_addr0,temp_addr1,temp_addr2,	temp_addr0,
 								height,width,p_format)) {
@@ -372,8 +318,6 @@ int arithmetic_hdr(unsigned char *dst_addr,uint32_t width,uint32_t height)
 			CMR_LOGE("can't handle hdr.");
 			ret = ARITH_FAIL;
 	}
-	memcpy(dst_addr,temp_addr0,width*height*3/2);
-/*	save_hdrdata(dst_addr,width,height);*/
 	pthread_mutex_unlock(&s_arith_cxt->hdr_lock);
 	if (ARITH_SUCCESS == ret) {
 		CMR_LOGI("hdr done.");

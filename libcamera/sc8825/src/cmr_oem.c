@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <stdlib.h>
 #include <math.h>
 #include "SprdOEMCamera.h"
@@ -84,16 +83,13 @@ uint32_t camera_get_img_type(uint32_t format_mode)
 
 int camera_get_trim_rect(struct img_rect *src_trim_rect, uint32_t zoom_level, struct img_size *dst_size)
 {
-	uint32_t trim_width;
-	uint32_t trim_height;
+	uint32_t trim_width = src_trim_rect->width;
+	uint32_t trim_height = src_trim_rect->height;
 	uint32_t zoom_step_w = 0, zoom_step_h = 0;
 
 	if (NULL == src_trim_rect || NULL == dst_size) {
 		return -CAMERA_INVALID_PARM;
 	}
-
-	trim_width = src_trim_rect->width;
-	trim_height = src_trim_rect->height;
 
 	if (0 == dst_size->width || 0 == dst_size->height) {
 		return -CAMERA_INVALID_PARM;
@@ -420,7 +416,6 @@ int camera_sync_var_init(struct camera_context *p_cxt)
 	sem_init(&p_cxt->exit_sem, 0, 0);
 	sem_init(&p_cxt->start_sem, 0, 0);
 	sem_init(&p_cxt->stop_sem, 0, 0);
-	sem_init(&p_cxt->set_sem, 0, 0);
 
 	return ret;
 }
@@ -433,7 +428,6 @@ int camera_sync_var_deinit(struct camera_context *p_cxt)
 	sem_destroy(&p_cxt->exit_sem);
 	sem_destroy(&p_cxt->start_sem);
 	sem_destroy(&p_cxt->stop_sem);
-	sem_destroy(&p_cxt->set_sem);
 
 	return ret;
 }
@@ -441,10 +435,9 @@ int camera_sync_var_deinit(struct camera_context *p_cxt)
 int camera_wait_start(struct camera_context *p_cxt)
 {
 	int                      ret = CAMERA_SUCCESS;
-	struct camera_context    *cxt = camera_get_cxt();
 
 	sem_wait(&p_cxt->start_sem);
-	ret = cxt->err_code;
+
 	return ret;
 }
 
@@ -457,32 +450,11 @@ int camera_start_done(struct camera_context *p_cxt)
 	return ret;
 }
 
-int camera_wait_set(struct camera_context *p_cxt)
-{
-	int                      ret = CAMERA_SUCCESS;
-	struct camera_context    *cxt = camera_get_cxt();
-
-	sem_wait(&p_cxt->set_sem);
-	ret = cxt->err_code;
-	return ret;
-}
-
-int camera_set_done(struct camera_context *p_cxt)
-{
-	int                      ret = CAMERA_SUCCESS;
-
-	sem_post(&p_cxt->set_sem);
-
-	return ret;
-}
-
 int camera_wait_stop(struct camera_context *p_cxt)
 {
 	int                      ret = CAMERA_SUCCESS;
-	struct camera_context    *cxt = camera_get_cxt();
 
 	sem_wait(&p_cxt->stop_sem);
-	ret = cxt->err_code;
 
 	return ret;
 }
@@ -499,10 +471,8 @@ int camera_stop_done(struct camera_context *p_cxt)
 int camera_wait_init(struct camera_context *p_cxt)
 {
 	int                      ret = CAMERA_SUCCESS;
-	struct camera_context    *cxt = camera_get_cxt();
 
 	sem_wait(&p_cxt->init_sem);
-	ret = cxt->err_code;
 
 	return ret;
 
@@ -512,16 +482,16 @@ int camera_init_done(struct camera_context *p_cxt)
 	int                      ret = CAMERA_SUCCESS;
 
 	sem_post(&p_cxt->init_sem);
+	ret = p_cxt->err_code;
 	return ret;
 }
 
 int camera_wait_exit(struct camera_context *p_cxt)
 {
 	int                      ret = CAMERA_SUCCESS;
-	struct camera_context    *cxt = camera_get_cxt();
 
 	sem_wait(&p_cxt->exit_sem);
-	ret = cxt->err_code;
+
 	return ret;
 
 }
@@ -655,9 +625,9 @@ int camera_set_sensormark(void)
 		CMR_LOGV("sensor param: %d, %d, %d, %d, %d, %d, %d, %d",
 			sensor_param[0], sensor_param[1], sensor_param[2], sensor_param[3],
 			sensor_param[4], sensor_param[5], sensor_param[6], sensor_param[7]);
-		fclose(fp);
 	}
 
+	fclose(fp);
 	Sensor_SetMark(sensor_param);
 
 	return CAMERA_SUCCESS;
@@ -682,11 +652,11 @@ int camera_save_sensormark(void)
 			CMR_LOGV("sensor param: %d, %d, %d, %d, %d, %d, %d, %d",
 				sensor_param[0], sensor_param[1], sensor_param[2], sensor_param[3],
 				sensor_param[4], sensor_param[5], sensor_param[6], sensor_param[7]);
-			fclose(fp);
 
 		} else {
 			CMR_LOGE("can not create SENSOR_PARA");
 		}
+		fclose(fp);
 	}
 
 	return ret;

@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2008 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #ifndef _SPRD_CAMERA_HARDWARE_CONFIG_H_
 #define _SPRD_CAMERA_HARDWARE_CONFIG_H_
 
@@ -69,7 +53,6 @@ typedef enum
 //	CAMERA_SCENE_MODE_PARTY, //not support
 //	CAMERA_SCENE_MODE_CANDLELIGHT, //not support
 //	CAMERA_SCENE_MODE_BARCODE, //not support
-	CAMERA_SCENE_MODE_NORMAL,
 	CAMERA_SCENE_MODE_MAX
  }camera_scene_mode_type;
 
@@ -78,13 +61,6 @@ typedef enum{
 	CAMERA_CAMERA_ID_FRONT,
 	CAMERA_CAMERA_ID_MAX
 }camera_id_type;
-
-typedef enum
-{
-    CAMERA_DC_MODE = 0,
-    CAMERA_DV_MODE,
-    CAMERA_DCDV_MODE_MAX
-} camera_dcdv_mode_type;
 
   typedef enum
  {
@@ -188,8 +164,7 @@ struct str_map {
         { "night", CAMERA_SCENE_MODE_NIGHT },
         { "portrait", CAMERA_SCENE_MODE_PORTRAIT },
         { "landscape", CAMERA_SCENE_MODE_LANDSCAPE },
-		{ "action", CAMERA_SCENE_MODE_ACTION},
-		{ "normal", CAMERA_SCENE_MODE_NORMAL},
+	{ "action", CAMERA_SCENE_MODE_ACTION},
         { NULL, 0 }
    };
   const struct str_map camera_id_map[] = {
@@ -197,13 +172,6 @@ struct str_map {
         { "front_camera", CAMERA_CAMERA_ID_FRONT},
         { NULL, 0 }
    };
-
-   const struct str_map camera_dcdv_mode[] = {
-        { "true", CAMERA_DV_MODE },
-        { "false", CAMERA_DC_MODE },
-        { NULL, 0 }
-   };
-
 
    const struct str_map zoom_map[] = {
         { "0", CAMERA_ZOOM_1X },
@@ -404,7 +372,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
      	"none,mono,negative,sepia,cold,antique"},
          {"effect", "none"},
 	{"scene-mode-values",
-	"auto,night,portrait,landscape,action,normal"},
+	 "auto,night,portrait,landscape,action"},
 	{"scene-mode", "auto"},
 	{"cameraid-values",
 	 "back_camera,front_camera"},
@@ -437,7 +405,7 @@ struct config_element sprd_back_camera_hardware_config[] = {
         {"focal-length", "3.75"},
         {"horizontal-view-angle", "54"},
         {"vertical-view-angle", "54"},
-	{"flash-mode-values", "off,on,torch,auto"},
+	{"flash-mode-values", "off,on,torch"},
 	{"flash-mode", "off"},
 	{"flash-mode-supported", "true"},
         {"focus-distances", "2.0,2.5,3.75"},

@@ -1,18 +1,22 @@
-/*
- * Copyright (C) 2008 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/******************************************************************************
+ ** Copyright (c) 
+ ** File Name:        sensor_HI351.c                                           *
+ ** Author:                                                       *
+ ** DATE:                                                              *
+ ** Description:   This file contains driver for sensor OV2640. 
+ **                                                          
+ ******************************************************************************
+
+ ******************************************************************************
+ **                        Edit History                                       *
+ ** ------------------------------------------------------------------------- *
+ ** DATE           NAME             DESCRIPTION                               *
+ **       
+ ******************************************************************************/
+
+/**---------------------------------------------------------------------------*
+ **                         Dependencies                                      *
+ **---------------------------------------------------------------------------*/
 
 #include <utils/Log.h>
 #include "sensor.h"
@@ -6622,7 +6626,7 @@ LOCAL const SENSOR_REG_T HI351_common[]=
 	//{0x0c, 0xf0}, //Parallel Line Off
 	
 	{0x03, 0x00},
-	{0x11, 0x80}, // STEVE 0frame skip, XY flip 
+	{0x11, 0x83}, // STEVE 0frame skip, XY flip 
 	{0x01, 0xf0}, //sleep off
 	
 	{0x03, 0xC0},
@@ -6692,7 +6696,7 @@ LOCAL const SENSOR_REG_T HI351_640X480[]=
 	
 	{0x03, 0x00}, 
 	{0x10, 0x10}, //Sub1/2 + Pre1
-	{0x11, 0x80}, // STEVE 0 skip Fix Frame Off, XY Flip
+	{0x11, 0x83}, // STEVE 0 skip Fix Frame Off, XY Flip
 	{0x13, 0x80}, //Fix AE Set Off
 	{0x14, 0x70}, // for Pre2mode
 	{0x17, 0x04}, // for Pre2mode

@@ -1,19 +1,15 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2012 Spreadtrum Communications Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
-
 #include <utils/Log.h>
 #include "sensor.h"
 #include "jpeg_exif_header.h"
@@ -35,6 +31,7 @@
 #define CMD_PARAM2 0x3026
 #define CMD_PARAM3 0x3027
 #define CMD_PARAM4 0x3028
+static uint32_t g_flash_mode_en = 0;
 static uint32_t ae_low = 0, ae_high = 0, ae_target = 0;
 static uint32_t preview_sysclk;
 static int s_ov5640_gain = 0;
@@ -60,14 +57,13 @@ LOCAL uint32_t _ov5640_BeforeSnapshot(uint32_t param);
 LOCAL uint32_t _ov5640_check_image_format_support(uint32_t param);
 LOCAL uint32_t _ov5640_pick_out_jpeg_stream(uint32_t param);
 LOCAL uint32_t _ov5640_after_snapshot(uint32_t param);
-/*LOCAL uint32_t _ov540_flash(uint32_t param);*/
+LOCAL uint32_t _ov540_flash(uint32_t param);
 LOCAL uint32_t _ov5640_GetExifInfo(uint32_t param);
 LOCAL uint32_t _ov5640_ExtFunc(uint32_t ctl_param);
 LOCAL uint32_t _ov5640_StreamOn(uint32_t param);
 LOCAL uint32_t _ov5640_StreamOff(uint32_t param);
 LOCAL uint32_t _ov5640_set_iso(uint32_t mode);
 LOCAL uint32_t _ov5640_ReadGain(uint32_t param);
-LOCAL uint32_t _ov5640_flash(uint32_t param);
 
 LOCAL const SENSOR_REG_T ov5640_common_init[] = {
 	{0x3103, 0x11},		/* sysclk from pad*/
@@ -1144,7 +1140,7 @@ LOCAL SENSOR_IOCTL_FUNC_TAB_T s_ov5640_ioctl_func_tab = {
 
 	_ov5640_BeforeSnapshot,
 	_ov5640_after_snapshot,
-	_ov5640_flash,/*_ov540_flash,*/
+	_ov540_flash,
 	PNULL,
 	PNULL,
 	PNULL,
@@ -1337,8 +1333,6 @@ LOCAL uint32_t _ov5640_PowerOn(uint32_t power_on)
 	//uint32_t reset_width=g_ov5640_yuv_info.reset_pulse_width;
 
 	if (SENSOR_TRUE == power_on) {
-		//reset
-		Sensor_SetResetLevel(reset_level);
 		Sensor_PowerDown(power_down);
 		// Open power
 		Sensor_SetVoltage(dvdd_val, avdd_val, iovdd_val);
@@ -1347,10 +1341,8 @@ LOCAL uint32_t _ov5640_PowerOn(uint32_t power_on)
 		Sensor_SetMCLK(SENSOR_DEFALUT_MCLK);
 		usleep(10*1000);
 		Sensor_PowerDown(!power_down);
-		usleep(10*1000);
 		// Reset sensor
-		Sensor_SetResetLevel(!reset_level);
-		usleep(20*1000);
+		Sensor_Reset(reset_level);
 	} else {
 		Sensor_PowerDown(power_down);
 		Sensor_SetMCLK(SENSOR_DISABLE_MCLK);
@@ -1785,9 +1777,9 @@ LOCAL const SENSOR_REG_BITS_T ov5640_awb_tab[][8] = {
 	 },
 	//incandescent
 	{
-	 {0x3406, 0x01, 0x01}, {0x3400, 0x05, 0xff}, {0x3401, 0x48, 0xff},
-	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x07, 0xff},
-	 {0x3405, 0xcf, 0xff}, {0xffff, 0xff, 0}
+	 {0x3406, 0x01, 0x01}, {0x3400, 0x05, 0xff}, {0x3401, 0x20, 0xff},
+	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x05, 0xff},
+	 {0x3405, 0x80, 0xff}, {0xffff, 0xff, 0}
 	 },
 	//dont' use
 	{
@@ -1801,21 +1793,21 @@ LOCAL const SENSOR_REG_BITS_T ov5640_awb_tab[][8] = {
 	 },
 	// tungsten
 	{
-	 {0x3406, 0x01, 0x01}, {0x3400, 0x04, 0xff}, {0x3401, 0x10, 0xff},
-	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x08, 0xff},
-	 {0x3405, 0x40, 0xff}, {0xffff, 0xff, 0}
+	 {0x3406, 0x01, 0x01}, {0x3400, 0x04, 0xff}, {0x3401, 0x40, 0xff},
+	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x07, 0xff},
+	 {0x3405, 0x00, 0xff}, {0xffff, 0xff, 0}
 	 },
 	//sun
 	{
-	 {0x3406, 0x01, 0x01}, {0x3400, 0x06, 0xff}, {0x3401, 0x1c, 0xff},
+	 {0x3406, 0x01, 0x01}, {0x3400, 0x05, 0xff}, {0x3401, 0xe0, 0xff},
 	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x04, 0xff},
-	 {0x3405, 0xf3, 0xff}, {0xffff, 0xff, 0}
+	 {0x3405, 0x60, 0xff}, {0xffff, 0xff, 0}
 	 },
 	//cloudy
 	{
-	 {0x3406, 0x01, 0x01}, {0x3400, 0x06, 0xff}, {0x3401, 0x48, 0xff},
-	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x04, 0xff},
-	 {0x3405, 0xd3, 0xff}, {0xffff, 0xff, 0}
+	 {0x3406, 0x01, 0x01}, {0x3400, 0x06, 0xff}, {0x3401, 0xc0, 0xff},
+	 {0x3402, 0x04, 0xff}, {0x3403, 0x00, 0xff}, {0x3404, 0x05, 0xff},
+	 {0x3405, 0x00, 0xff}, {0xffff, 0xff, 0}
 	 }
 };
 
@@ -2004,40 +1996,6 @@ LOCAL const SENSOR_REG_BITS_T ov5640_work_mode_tab[][30] = {
 	 {0x538b, 0x98, 0xff},
 
 	 {0xFFFF, 0xFF, 0xff}
-	 },
-	 /* Normal Mode */
-	{
-	 // Night mode disable
-	 {0x3a00, 0x78, 0xff},	// 0x04
-	 //ISO Auto - 8x1
-	 {0x3a18, 0x00, 0xff},
-	 {0x3a19, 0xf8, 0xff},
-	 // AE Weight - Average
-	 {0x501d, 0x00, 0xff},
-	 {0x5688, 0x11, 0xff},
-	 {0x5689, 0x11, 0xff},
-	 {0x568a, 0x11, 0xff},
-	 {0x568b, 0x11, 0xff},
-	 {0x568c, 0x11, 0xff},
-	 {0x568d, 0x11, 0xff},
-	 {0x568e, 0x11, 0xff},
-	 {0x568f, 0x11, 0xff},
-	 // CMX
-	 {0x5381, 0x1e, 0xff},
-	 {0x5382, 0x5b, 0xff},
-	 {0x5383, 0x08, 0xff},
-	 {0x5384, 0x0a, 0xff},
-	 {0x5385, 0x7e, 0xff},
-	 {0x5386, 0x88, 0xff},
-	 {0x5387, 0x7c, 0xff},
-	 {0x5388, 0x6c, 0xff},
-	 {0x5389, 0x10, 0xff},
-	 {0x538a, 0x01, 0xff},
-	 {0x538b, 0x98, 0xff},
-	 //normal fix 25fps
-	 {0x3a14, 0x04, 0xff},
-	 {0x3a15, 0x98, 0xff},
-	 {0xFFFF, 0xFF, 0xff}
 	 }
 };
 
@@ -2049,7 +2007,7 @@ LOCAL uint32_t _ov5640_set_work_mode(uint32_t mode)
 	SENSOR_REG_BITS_T_PTR sensor_reg_ptr =
 	    (SENSOR_REG_BITS_T_PTR) ov5640_work_mode_tab[mode];
 
-	if (mode > 5)
+	if (mode > 4)
 		return 0;
 
 	for (i = 0;
@@ -2409,16 +2367,6 @@ int OV5640_capture(uint32_t param)
 
 LOCAL uint32_t _ov5640_BeforeSnapshot(uint32_t param)
 {
-
-
-
-	SENSOR_PRINT("%d.",param);
-	if (SENSOR_MODE_PREVIEW_ONE >= param) {
-		s_capture_shutter = OV5640_get_shutter();
-		s_capture_VTS = OV5640_get_VTS();
-		_ov5640_ReadGain(param);
-		return SENSOR_SUCCESS;
-	}
 	OV5640_capture(param);
 
 	return SENSOR_SUCCESS;
@@ -2485,7 +2433,22 @@ LOCAL uint32_t _ov5640_pick_out_jpeg_stream(uint32_t param)
 
 LOCAL uint32_t _ov5640_after_snapshot(uint32_t param)
 {
+	SENSOR_PRINT_HIGH("g_flash_mode = %d", g_flash_mode_en);
+	if (g_flash_mode_en) {
+		Sensor_SetFlash(0x10);
+	}
 	Sensor_SetMode(param);
+	return SENSOR_SUCCESS;
+}
+
+LOCAL uint32_t _ov540_flash(uint32_t param)
+{
+	SENSOR_PRINT_HIGH("Start:param=%d", param);
+
+	/* enable flash, disable in _ov5640_BeforeSnapshot */
+	g_flash_mode_en = param;
+	Sensor_SetFlash(param);
+	SENSOR_PRINT_HIGH("end");
 	return SENSOR_SUCCESS;
 }
 
@@ -2904,7 +2867,7 @@ LOCAL void _calculate_hdr_exposure(int capture_gain16,int capture_VTS, int captu
 LOCAL uint32_t _ov5640_SetEV(uint32_t param)
 {
 	uint32_t rtn = SENSOR_SUCCESS;
-	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_PARAM_T_PTR) param;
+	SENSOR_EXT_FUN_PARAM_T_PTR ext_ptr = (SENSOR_EXT_FUN_T_PTR) param;
 
 	uint16_t value=0x00;
 	uint32_t gain = s_ov5640_gain;
@@ -7200,27 +7163,4 @@ LOCAL uint32_t _ov5640_set_iso(uint32_t mode)
 
 	SENSOR_PRINT("read 0x%x,0x%x", Sensor_ReadReg(0x3a18),Sensor_ReadReg(0x3a19));
 	return 0;
-}
-
-LOCAL uint32_t _ov5640_flash(uint32_t param)
-{
-	uint16_t value = 0;
-	uint32_t *autoflash;
-
-	autoflash = (uint32_t *) param;
-	if(autoflash){
-		//usleep(1000);
-		value = Sensor_ReadReg(0x56a1);
-		if(value < 18) {
-			*autoflash = 1;
-		}else {
-			*autoflash = 0;
-		}
-	}else {
-		SENSOR_PRINT("  NULL pointer error! ");
-		return SENSOR_FAIL;
-	}
-
-	SENSOR_PRINT(" value = %d, autoflash = 0x%x, auto_flash_mode",  value, autoflash);
-	return SENSOR_SUCCESS;
 }
