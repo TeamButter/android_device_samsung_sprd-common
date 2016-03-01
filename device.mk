@@ -58,7 +58,11 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
 	gralloc.sc8810 \
 	hwcomposer.sc8810 \
-	libUMP
+	libUMP \
+	libMali.so \
+	libEGL_mali.so \
+	libGLESv1_CM_mali.so \
+	libGLESv2_mali.so
     
 # Audio
 PRODUCT_PACKAGES += \
@@ -90,6 +94,7 @@ PRODUCT_COPY_FILES += \
 	frameworks/native/data/etc/android.hardware.usb.accessory.xml:system/etc/permissions/android.hardware.usb.accessory.xml \
  	frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
 	frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
+	frameworks/native/data/etc/android.hardware.wifi.direct.xml:system/etc/permissions/android.hardware.wifi.direct.xml \
 	frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
 	packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml \
  	frameworks/native/data/etc/android.hardware.camera.xml:system/etc/permissions/android.hardware.camera.xml
@@ -105,20 +110,7 @@ PRODUCT_PACKAGES += \
 # Samsung Service Mode
 PRODUCT_PACKAGES += \
 	SamsungServiceMode
-    
-    
-# OMX
-PRODUCT_PACKAGES += \
-	libomx_aacdec_sprd.so \
-	libomx_apedec_sprd.so \
-	libomx_avcdec_hw_sprd.so \
-	libomx_avcdec_sw_sprd.so \
-	libomx_avcenc_hw_sprd.so \
-	libomx_m4vh263dec_hw_sprd.so \
-	libomx_m4vh263dec_sw_sprd.so \
-	libomx_m4vh263enc_hw_sprd.so \
-	libomx_mp3dec_sprd.so \
-	libomx_vpxdec_hw_sprd.so
+
 	
 # Proper CPU Frequency scaling driver module by psych.half
 PRODUCT_PACKAGES += \
