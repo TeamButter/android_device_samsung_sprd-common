@@ -33,7 +33,6 @@ TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/platform/dwc_otg.0/gadget/lun0/
 
 # Graphics
 USE_OPENGL_RENDERER := true
-BOARD_EGL_CFG := device/samsung/sprd-common/egl/egl.cfg
 BOARD_EGL_NEEDS_FNW := true
 
 # Camera
@@ -49,7 +48,7 @@ BOARD_BLUEDROID_VENDOR_CONF := device/samsung/sprd-common/bluetooth/libbt_vndcfg
 BOARD_HAL_STATIC_LIBRARIES := libhealthd.sprd
 
 # RIL
-BOARD_RIL_CLASS := ../../../device/samsung/sprd-common/ril/
+BOARD_RIL_CLASS := device/samsung/sprd-common/ril/
 BOARD_MOBILEDATA_INTERFACE_NAME := "rmnet0"
 
 # Audio
