@@ -60,7 +60,6 @@ PRODUCT_PACKAGES += \
 	hwcomposer.sc8810 \
 	libUMP \
 	libMali.so \
-	libEGL_mali.so \
 	libGLESv1_CM_mali.so \
 	libGLESv2_mali.so
     
