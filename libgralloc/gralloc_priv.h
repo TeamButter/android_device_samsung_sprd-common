@@ -51,7 +51,6 @@ struct private_module_t
 	pthread_mutex_t lock;
 	buffer_handle_t currentBuffer;
 	int ion_client;
-
 	int mIonFd;
 	int mIonBufNum;
 	
