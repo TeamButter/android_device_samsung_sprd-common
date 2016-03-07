@@ -105,8 +105,8 @@ static int at_cmd_route(struct tiny_audio_device *adev)
     if (adev->mode != AUDIO_MODE_IN_CALL) {
         ALOGE("Error: NOT mode_in_call, current mode(%d)", adev->mode);
         return -1;
-    }
-
+    }    
+    
     if (adev->devices & (AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE)) {
         at_cmd = "AT+SSAM=2";
     } else if (adev->devices & (AUDIO_DEVICE_OUT_BLUETOOTH_SCO

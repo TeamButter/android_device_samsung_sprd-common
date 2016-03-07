@@ -63,7 +63,7 @@ int eng_at_open(int type)
 {
 	int counter=0;
 	int err=0;
-    int soc_fd=-1;
+        int soc_fd=-1;
 	
 	//connect to server
 	soc_fd = eng_client(ENG_SOCKET_PORT, SOCK_STREAM);
