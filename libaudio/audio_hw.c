@@ -2588,7 +2588,11 @@ static int adev_set_voice_volume(struct audio_hw_device *dev, float volume)
 
     adev->voice_volume = volume;
     /*Send at command to cp side*/
-    at_cmd_volume(volume,adev->mode);
+    if(adev->mode == AUDIO_MODE_IN_CALL)
+    	at_cmd_volume(volume,adev->mode);
+    else {
+    	BLUE_TRACE("adev_set_voice_volume: Not in call mode, aborting!");
+    }
 
     return 0;
 }
@@ -3415,7 +3419,7 @@ static int adev_open(const hw_module_t* module, const char* name,
     memset(adev, 0, sizeof(struct tiny_audio_device));
 
     adev->hw_device.common.tag = HARDWARE_DEVICE_TAG;
-    adev->hw_device.common.version = AUDIO_DEVICE_API_VERSION_1_0;
+    adev->hw_device.common.version = AUDIO_DEVICE_API_VERSION_2_0;
     adev->hw_device.common.module = (struct hw_module_t *) module;
     adev->hw_device.common.close = adev_close;
 
