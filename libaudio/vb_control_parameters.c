@@ -653,7 +653,7 @@ static void SetCall_ModePara(struct tiny_audio_device *adev,paras_mode_gain_t *m
     /*
         we need to wait for codec here before call connected, maybe driver needs to fix this problem.
     */
-    if(!adev->call_connected){
+    if((!switch_headset) && (android_cur_device)){
         usleep(1000*100);
     }
 	ALOGW("%s successfully, device: earpice(%s), headphone(%s), speaker(%s), Main_Mic(%s), Back_Mic(%s), hp_mic(%s) devices(0x%x)"
