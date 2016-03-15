@@ -17,7 +17,7 @@ LOCAL_C_INCLUDES := \
 	external/skia/include/core\
         external/jhead \
         external/sqlite/dist \
-	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video \
+	$(TOP)/device/samsung/sprd-common/kernel_headers \
 	$(TOP)/device/samsung/sprd-common/libgralloc \
 	$(TOP)/device/samsung/sprd-common/mali/src/ump/include \
 	$(TOP)/device/samsung/sprd-common/libmemoryheapion
