@@ -44,7 +44,7 @@ static struct mali_gpu_device_data mali_gpu_data =
 {
 	.shared_mem_size = ARCH_MALI_MEMORY_SIZE_DEFAULT,
 	.utilization_interval = 300,
-	.utilization_handler = mali_platform_utilization,
+	//.utilization_handler = mali_platform_utilization,
 };
 
 static struct platform_device mali_gpu_device =

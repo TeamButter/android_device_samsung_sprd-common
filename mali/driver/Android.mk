@@ -23,9 +23,11 @@ else
 endif
 
 $(LOCAL_PATH)/ump/ump.ko: bootimage
-	$(MAKE) -C $(shell dirname $@) CONFIG=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL clean
-	$(MAKE) -C $(shell dirname $@) CONFIG=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL
+	$(MAKE) -C $(shell dirname $@) CONFIG=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ clean
+	$(MAKE) -C $(shell dirname $@) CONFIG=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ
+	$(ARM_EABI_TOOLCHAIN)/arm-eabi-strip --strip-unneeded $(shell dirname $@)/ump.ko
 
 $(LOCAL_PATH)/mali/mali.ko: $(LOCAL_PATH)/ump/ump.ko
-	$(MAKE) -C $(shell dirname $@) MALI_PLATFORM=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL clean
-	$(MAKE) -C $(shell dirname $@) MALI_PLATFORM=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL
+	$(MAKE) -C $(shell dirname $@) MALI_PLATFORM=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ clean
+	$(MAKE) -C $(shell dirname $@) MALI_PLATFORM=$(TARGET_BOARD_PLATFORM) $(DEBUGMODE) KDIR=$(ANDROID_PRODUCT_OUT)/obj/KERNEL_OBJ
+	$(ARM_EABI_TOOLCHAIN)/arm-eabi-strip --strip-unneeded $(shell dirname $@)/mali.ko
