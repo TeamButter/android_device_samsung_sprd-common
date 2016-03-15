@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <math.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -41,6 +42,7 @@
 
 // numbers of buffers for page flipping
 #define NUM_BUFFERS 2
+
 
 enum
 {
@@ -232,12 +234,34 @@ int init_frame_buffer_locked(struct private_module_t* module)
 	info.xoffset = 0;
 	info.yoffset = 0;
 	info.activate = FB_ACTIVATE_NOW;
+	
+	/* Is it really a great idea to determine screen size and width from props?
+	   They can be changed by users, which might cause issues.
+	   
+	   Hence, we define flags in the BoardConfig.mk (in device specific repo) to do the job.
+	   Set TARGET_LCD_WIDTH and TARGET_LCD_HEIGHT in BoardConfig.mk, filling it with appropriate values.
+	   
+	   If you are unsure, atleast define TARGET_LCD_SIZE flag in BoardConfig.mk and fill it with the screen diagonal length (in inches ofc). (It should be easy to find out because it WILL BE mentioned in device's spec sheet.
+	   Also set TARGET_SCREEN_WIDTH and TARGET_SCREEN_HEIGHT in BoardConfig.mk, and fill it with device resolution for appropriate axes respectively.
+	   
+	   Worst cases? Determine by default way then.*/
 
+#if defined(TARGET_LCD_WIDTH) && defined(TARGET_LCD_HEIGHT)
+	info.width = TARGET_LCD_WIDTH;
+	info.height = TARGET_LCD_HEIGHT;
+#else	   
+#ifdef TARGET_LCD_SIZE	 
+	info.width =  TARGET_SCREEN_WIDTH * sqrt(pow(TARGET_LCD_SIZE * 25.4f,2) - (pow(TARGET_SCREEN_HEIGHT,2) + pow(TARGET_SCREEN_WIDTH,2)));
+	info.height =  TARGET_SCREEN_HEIGHT * sqrt(pow(TARGET_LCD_SIZE * 25.4f,2) - (pow(TARGET_SCREEN_HEIGHT,2) + pow(TARGET_SCREEN_WIDTH,2)));
+#else
+	/* Looks like none of the flags were defined, use defaults*/
 	char value[PROPERTY_VALUE_MAX];
 	property_get("ro.sf.lcd_width", value, "1");
 	info.width = atoi(value);
 	property_get("ro.sf.lcd_height", value, "1");
 	info.height = atoi(value);
+#endif
+#endif
 
     if(info.bits_per_pixel == 16)
     {
