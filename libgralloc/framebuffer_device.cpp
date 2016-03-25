@@ -325,7 +325,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
 	}
 
 	int refreshRate = 0;
-	if ( info.pixclock > 0 )
+	/*if ( info.pixclock > 0 )
 	{
 		refreshRate = 1000000000000000LLU /
 		(
@@ -337,7 +337,7 @@ int init_frame_buffer_locked(struct private_module_t* module)
 	else
 	{
 		AWAR( "fbdev pixclock is zero for fd: %d", fd );
-	}
+	}*/
 
 	if (refreshRate == 0)
 	{
