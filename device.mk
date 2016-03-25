@@ -58,10 +58,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
 	gralloc.sc8810 \
 	hwcomposer.sc8810 \
-	libUMP \
-	libMali.so \
-	libGLESv1_CM_mali.so \
-	libGLESv2_mali.so
+	libUMP
     
 # Audio
 PRODUCT_PACKAGES += \
