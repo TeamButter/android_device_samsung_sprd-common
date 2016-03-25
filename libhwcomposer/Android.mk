@@ -27,6 +27,7 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../libgralloc \
 	$(LOCAL_PATH)/../mali/src/ump/include \
 	$(LOCAL_PATH)/../libmemoryheapion \
+	$(LOCAL_PATH)/../kernel_headers \
 	$(LOCAL_PATH)/vsync \
 	$(LOCAL_PATH)/android \
 	$(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/video \
