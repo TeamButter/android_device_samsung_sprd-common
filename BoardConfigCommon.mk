@@ -43,6 +43,8 @@ BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
 BOARD_BLUEDROID_VENDOR_CONF := device/samsung/sprd-common/bluetooth/libbt_vndcfg.txt
 
+# Media
+BOARD_USE_SAMSUNG_COLORFORMAT := true
 
 # Healthd
 BOARD_HAL_STATIC_LIBRARIES := libhealthd.sprd
