@@ -17,7 +17,7 @@
 #define _VB_HAL_H_
 
 #include <stdint.h>
-#include <eng_audio.h>
+#include "eng_audio.h"
 #include "aud_common.h"
 
 /**---------------------------------------------------------------------------*

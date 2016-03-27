@@ -105,8 +105,8 @@ static int at_cmd_route(struct tiny_audio_device *adev)
     if (adev->mode != AUDIO_MODE_IN_CALL) {
         ALOGE("Error: NOT mode_in_call, current mode(%d)", adev->mode);
         return -1;
-    }    
-    
+    }
+
     if (adev->devices & (AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE)) {
         at_cmd = "AT+SSAM=2";
     } else if (adev->devices & (AUDIO_DEVICE_OUT_BLUETOOTH_SCO
@@ -253,7 +253,7 @@ int at_cmd_volume(float vol, int mode)
     int ret = 0;
     unsigned short cur_device;
 
-    int volume = vol* VOICECALL_VOLUME_MAX_UI + 1;
+    int volume = vol * VOICECALL_VOLUME_MAX_UI + 1;
     if (volume >= VOICECALL_VOLUME_MAX_UI) volume = VOICECALL_VOLUME_MAX_UI;
     ALOGI("%s mode=%d ,volume=%d, android vol:%f ", __func__,mode,volume,vol);
     snprintf(at_cmd, sizeof buf, "AT+VGR=%d", volume);
