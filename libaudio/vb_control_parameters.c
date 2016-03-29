@@ -533,7 +533,8 @@ static void SetCall_VolumePara(struct tiny_audio_device *adev,paras_mode_gain_t 
 
     ALOGE(":SetCall_VolumePara pga_gain_nv.pa_setting %d",pga_gain_nv.pa_setting);
 
-	ret = SetAudio_gain_by_devices_incall(adev,&pga_gain_nv);
+	//ret = SetAudio_gain_by_devices_incall(adev,&pga_gain_nv);
+	ret = SetAudio_gain_by_devices(adev,&pga_gain_nv);
     if(ret < 0){
         return;
     }
