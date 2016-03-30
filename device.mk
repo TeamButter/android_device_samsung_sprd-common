@@ -19,9 +19,6 @@ LOCAL_PATH := device/samsung/sprd-common
 PRODUCT_COPY_FILES += \
 	$(LOCAL_PATH)/media/media_codecs.xml:system/etc/media_codecs.xml \
 	$(LOCAL_PATH)/media/media_profiles.xml:system/etc/media_profiles.xml
-	
-PRODUCT_PACKAGES += \
-	libstagefrighthw
 
 
 #Wifi
@@ -81,6 +78,10 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 PRODUCT_PACKAGES += \
 	charger \
 	charger_res_images
+	
+# Init
+PRODUCT_PACKAGES += \
+	prop_init
 
 # Permissions
 PRODUCT_COPY_FILES += \
