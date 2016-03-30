@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <cutils/log.h>
 #include <cutils/properties.h>
@@ -38,43 +39,64 @@
 #define MODEL_PROP	"ro.product.model"
 #define DUAL_SIM_PROP	"persist.radio.multisim.config"
 
+#define MAX_RETRY_COUNT	8
+#define SLEEP		2000	//2 secs?
+
 /* We assume the device is dual SIM by default, as we had done in device tree*/
 int is_dual_sim = 1; 
 
 /* Function to determine model number by analysing baseband and set model number accordingly. Type is void* to comply with pthread for multithreading. */
 void* detect_model_number() {
 	char prop_buf[PROPERTY_VALUE_MAX];
-	property_get(BASEBAND_PROP,prop_buf,NULL);
-	if(!strncmp(prop_buf,"S5280",5)) {
-		ALOGI("Setting property %s to GT-S280",MODEL_PROP);
-		property_set(MODEL_PROP,"GT-S5280");
-		is_dual_sim = 0;
+	size_t count = 0;
+	while(1) {
+		property_get(BASEBAND_PROP,prop_buf,NULL);
+		if(prop_buf[0] == NULL) {
+			count++;
+			if(count < MAX_RETRY_COUNT) 
+				continue;
+		}
+		if(!strncmp(prop_buf,"S5280",5)) {
+			ALOGI("Setting property %s to GT-S280",MODEL_PROP);
+			property_set(MODEL_PROP,"GT-S5280");
+			is_dual_sim = 0;
+		}
+		if(!strncmp(prop_buf,"S5282",5)) {
+			ALOGI("Setting property %s to GT-S282",MODEL_PROP);
+			property_set(MODEL_PROP,"GT-S5282");
+		}
+		break;
 	}
-	if(!strncmp(prop_buf,"S5282",5)) {
-		ALOGI("Setting property %s to GT-S282",MODEL_PROP);
-		property_set(MODEL_PROP,"GT-S5282");
-	}
-	
 	return NULL;
 }
 
 /* Function to determine SIM number, and set props accordingly*/
 void* detect_sim_number() {
 	char prop_buf[PROPERTY_VALUE_MAX];
-	property_get(SIM_NUM_PROP,prop_buf,NULL);
-	if(prop_buf[0] == NULL) {
-		ALOGE("Could not get %s property. So its single SIM!",SIM_NUM_PROP);
-		property_set(DUAL_SIM_PROP,"none");
-	} else {
-		if(atoi(prop_buf)) {
-			ALOGI("Setting %s to dsds",DUAL_SIM_PROP);
-			property_set(DUAL_SIM_PROP,"dsds");
+	size_t count = 0;
+	while(1) {
+		property_get(SIM_NUM_PROP,prop_buf,NULL);
+		if(prop_buf[0] == NULL) {
+			if(count < MAX_RETRY_COUNT) {
+				ALOGE("Could not get %s property. Retrying after 2secs!!",SIM_NUM_PROP);
+				count++;
+				usleep(SLEEP);
+				continue;
+			} else {
+				ALOGI("Could not get %s property after %u tries. Assuming single mode!",SIM_NUM_PROP,count+1);
+				property_set(DUAL_SIM_PROP,"none");
+			}
 		} else {
-			ALOGI("Setting %s to none",DUAL_SIM_PROP);
-			property_set(DUAL_SIM_PROP,"none");
+			if(atoi(prop_buf)) {
+				ALOGI("Setting %s to dsds",DUAL_SIM_PROP);
+				property_set(DUAL_SIM_PROP,"dsds");
+			} else {
+				ALOGI("Setting %s to none",DUAL_SIM_PROP);
+				property_set(DUAL_SIM_PROP,"none");
+			}
 		}
+		break;
 	}
-	
 	return NULL;
 }
 
