@@ -43,8 +43,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
 
 # Board-Pecific
 PRODUCT_PACKAGES += \
-    	lights.sc8810 \
-    	cpufreq-sc8810.ko
+    	lights.sc8810
     	
 # Compat
 PRODUCT_PACKAGES += \
