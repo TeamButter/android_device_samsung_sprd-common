@@ -155,9 +155,7 @@ public class SamsungSPRDRIL extends RIL implements CommandsInterface {
         }
     }
 
-
-    private void invokeOemRilRequestSprd(byte key, byte value, Message response) {
+    protected void invokeOemRilRequestSprd(byte key, byte value, Message response) {
         invokeOemRilRequestRaw(new byte[] { 'S', 'P', 'R', 'D', key, value }, response);
     }
 }
-
