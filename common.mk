@@ -25,6 +25,13 @@ PRODUCT_PACKAGES += \
 	audio.r_submix.default \
 	libtinyalsa
 
+# WiFi
+PRODUCT_PACKAGES += \
+	libnetcmdiface \
+	dhcpcd.conf \
+	wpa_supplicant \
+	hostapd
+
 # Device props
 PRODUCT_PROPERTY_OVERRIDES := \
 	keyguard.no_require_sim=true \
