@@ -20,39 +20,19 @@
 # definition file).
 #
 
-
-# Board
-TARGET_NO_BOOTLOADER := true
-TARGET_NO_RADIOIMAGE := true
-
 # Graphics
 USE_OPENGL_RENDERER := true
-
-# Include an expanded selection of fonts
-EXTENDED_FONT_FOOTPRINT := true
-USE_MINIKIN := true
 
 # RIL
 BOARD_RIL_CLASS := ../../../device/samsung/sprd-common/ril
 
-# Camera
-USE_CAMERA_STUB := true
-
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
-BOARD_BLUEDROID_VENDOR_CONF := device/samsung/sprd-common/bluetooth/libbt_vndcfg.txt
-
-# Healthd
-BOARD_HAL_STATIC_LIBRARIES := libhealthd.sprd
 
 # Audio
 BOARD_USES_TINYALSA_AUDIO := true
 TARGET_TINY_ALSA_IGNORE_SILENCE_SIZE := true
 
-
 # CMHW
 BOARD_HARDWARE_CLASS := device/samsung/sprd-common/cmhw/
-
-# Compat
-TARGET_USES_LOGD := false
