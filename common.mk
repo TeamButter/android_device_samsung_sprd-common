@@ -24,7 +24,8 @@ PRODUCT_PACKAGES += \
 	audio.a2dp.default \
 	audio.usb.default \
 	audio.r_submix.default \
-	libtinyalsa
+	libtinyalsa \
+	tinymix
 
 # WiFi
 PRODUCT_PACKAGES += \
@@ -39,9 +40,14 @@ PRODUCT_PROPERTY_OVERRIDES := \
 	ro.com.android.dataroaming=false \
 	persist.sys.sprd.modemreset=0
 
+# Board-Pecific
+PRODUCT_PACKAGES += \
+    lights.sc8810
+    	
 # Compat
 PRODUCT_PACKAGES += \
-    	libstlport
+    libsymbol_wrapper \
+	libstlport
 
 # Set default USB interface
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
@@ -82,3 +88,18 @@ PRODUCT_PACKAGES += \
 # Samsung Service Mode
 PRODUCT_PACKAGES += \
 	SamsungServiceMode
+
+
+# Web
+PRODUCT_PACKAGES += \
+    libskia_legacy
+    
+# Camera
+PRODUCT_PACKAGES += \
+    Snap \
+    Gallery2 \
+    camera.sc8810 \
+    libmemoryheapion
+    
+# WiFi    
+$(call inherit-product, hardware/broadcom/wlan/bcmdhd/config/config-bcm.mk)
