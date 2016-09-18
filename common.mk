@@ -45,7 +45,7 @@ PRODUCT_PACKAGES += \
     	
 # Compat
 PRODUCT_PACKAGES += \
-    libsymbol_wrapper \
+    libril_shim \
 	libstlport
 
 # Set default USB interface
