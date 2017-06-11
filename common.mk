@@ -41,7 +41,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
 
 # Board-Pecific
 PRODUCT_PACKAGES += \
-    lights.sc8810
+    lights.$(TARGET_BOARD_PLATFORM)
     	
 # Compat
 PRODUCT_PACKAGES += \
