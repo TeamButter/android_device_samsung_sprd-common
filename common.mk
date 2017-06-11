@@ -102,7 +102,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     Snap \
     Gallery2 \
-    camera.sc8810 \
     libmemoryheapion
     
 # WiFi    
