@@ -59,7 +59,8 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 # Charger
 PRODUCT_PACKAGES += \
-	charger
+	charger \
+	charger_res_images
 
 # Permissions
 PERMISSION_XML_FILES := \
